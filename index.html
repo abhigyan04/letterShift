@@ -1,0 +1,1931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Letter Shift</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #F0E5C8;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(139, 110, 70, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(96, 128, 40, 0.08) 0%, transparent 50%);
+    color: #2A1A0A;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .sr-only {
+    position: absolute;
+    width: 1px; height: 1px;
+    padding: 0; margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .wrap {
+    width: 100%;
+    max-width: 480px;
+    user-select: none;
+  }
+  .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #B8966C;
+  }
+  .title {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 900;
+    font-size: 30px;
+    font-style: italic;
+    color: #2A1A0A;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variation-settings: "SOFT" 60, "WONK" 1;
+  }
+  .stats {
+    font-size: 11px;
+    color: #6F523A;
+    display: flex;
+    gap: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+  .stats span span {
+    color: #2A1A0A;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .auth {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+    font-size: 13px;
+    color: #6F523A;
+  }
+  .auth button {
+    padding: 8px 16px;
+    border: 1px solid #8B6F47;
+    border-radius: 6px;
+    background: #E5D5AA;
+    cursor: pointer;
+    font-size: 12px;
+    color: #4D3411;
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: background 0.15s;
+  }
+  .auth button:hover { background: #DCC494; }
+  .target {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+  .meaning {
+    text-align: center;
+    margin-bottom: 18px;
+    font-style: italic;
+    color: #6F523A;
+    font-size: 14px;
+  }
+  .slot {
+    width: 50px;
+    height: 50px;
+    border: 2px dashed #8B6F47;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 24px;
+    font-weight: 700;
+    background: #E5D5AA;
+    color: #8B6F47;
+    transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .slot.filled {
+    background: #608028;
+    border-color: #486819;
+    border-style: solid;
+    color: #F0E5C8;
+  }
+  .slot.flash {
+    animation: fill 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .msg {
+    text-align: center;
+    font-size: 13px;
+    min-height: 18px;
+    margin-bottom: 10px;
+    color: #6F523A;
+    font-weight: 500;
+  }
+  .msg.win { color: #486819; font-weight: 700; }
+  .msg.lose { color: #8B3A24; font-weight: 600; }
+  .meaning {
+    text-align: center;
+    font-size: 12px;
+    margin-bottom: 10px;
+    color: #6F523A;
+    font-weight: 500;
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+  }
+  .grid {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    background: #5D4424;
+    border-radius: 12px;
+    margin-bottom: 18px;
+    box-shadow:
+      inset 0 0 0 3px #4A3520,
+      inset 0 2px 4px rgba(0,0,0,0.3),
+      0 4px 0 #3A2914,
+      0 6px 12px rgba(58, 41, 20, 0.25);
+    --gap: 8px;
+    --pad: 10px;
+    --cell: calc((100% - var(--pad) * 2 - var(--gap) * 4) / 5);
+  }
+  .grid.shake { animation: shake 0.32s ease-in-out; }
+  .bg {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: var(--gap);
+    padding: var(--pad);
+  }
+  .bgcell {
+    background: #8C6E45;
+    border-radius: 6px;
+    box-shadow: inset 0 2px 3px rgba(0,0,0,0.25);
+  }
+  .tile {
+    position: absolute;
+    width: var(--cell);
+    height: var(--cell);
+    top: calc(var(--pad) + var(--r) * (var(--cell) + var(--gap)));
+    left: calc(var(--pad) + var(--c) * (var(--cell) + var(--gap)));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 30px;
+    font-weight: 700;
+    border-radius: 6px;
+    transition: top 0.15s ease-out, left 0.15s ease-out, opacity 0.12s ease-out;
+    z-index: 1;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  }
+  .tile.spawning { animation: pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .tile.merging { opacity: 0; z-index: 0; }
+  .tile.tappable {
+    box-shadow:
+      inset 0 0 0 3px #DDE5C0,
+      0 0 0 2px #608028,
+      0 1px 3px rgba(0,0,0,0.2);
+    cursor: pointer;
+    z-index: 2;
+  }
+  .tile.tappable:hover { transform: scale(1.04); }
+  .t1 { background: #F4E9D0; color: #4D3411; }
+  .t2 { background: #E8D5AA; color: #4D3411; }
+  .t3 { background: #D9BC83; color: #34230A; }
+  .t4 { background: #C49E5C; color: #34230A; }
+  .t5 { background: #8A6D2A; color: #F3E7C3; }
+  .t6 { background: #7A5F22; color: #F4E9D0; }
+  .t7 { background: #69491A; color: #F4E9D0; }
+  .t8 { background: #4D3411; color: #F4E9D0; }
+  .t9 { background: #34230A; color: #F4E9D0; }
+  .t10 { background: #1F1404; color: #F4E9D0; }
+  .t11 { background: #0E0902; color: #F4E9D0; }
+  .t12 { background: #DDE5C0; color: #34520F; }
+  .t13 { background: #C8D49C; color: #34520F; }
+  .t14 { background: #B0C375; color: #34520F; }
+  .t15 { background: #95B055; color: #233D08; }
+  .t16 { background: #7A993B; color: #DDE5C0; }
+  .t17 { background: #608028; color: #DDE5C0; }
+  .t18 { background: #486819; color: #DDE5C0; }
+  .t19 { background: #34520F; color: #DDE5C0; }
+  .t20 { background: #233D08; color: #DDE5C0; }
+  .t21 { background: #152A03; color: #DDE5C0; }
+  .t22 { background: #091A00; color: #DDE5C0; }
+  .t23 { background: #614813; color: #F4E9D0; }
+  .t24 { background: #8C6A1A; color: #F4E9D0; }
+  .t25 { background: #BD9626; color: #2A1A0A; }
+  .t26 {
+    background: #E8C547;
+    color: #2A1A0A;
+    animation: glint 2.4s ease-in-out infinite;
+  }
+  @keyframes pop {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.14); }
+    100% { transform: scale(1); }
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-7px); }
+    40% { transform: translateX(7px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  @keyframes fill {
+    0% { transform: scale(1) rotate(0); }
+    50% { transform: scale(1.25) rotate(-6deg); }
+    100% { transform: scale(1) rotate(0); }
+  }
+  @keyframes glint {
+    0%, 100% { background: #E8C547; }
+    50% { background: #F5DD5C; }
+  }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(3, 56px);
+    grid-template-rows: 44px 44px;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 14px;
+  }
+  .controls button {
+    background: #E5D5AA;
+    border: 1px solid #8B6F47;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #4D3411;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
+    box-shadow: 0 2px 0 #8B6F47;
+  }
+  .controls button:hover { background: #DCC494; }
+  .controls button:active {
+    transform: translateY(2px);
+    box-shadow: 0 0 0 #8B6F47;
+  }
+  .ls-up { grid-column: 2; grid-row: 1; }
+  .ls-left { grid-column: 1; grid-row: 2; }
+  .ls-down { grid-column: 2; grid-row: 2; }
+  .ls-right { grid-column: 3; grid-row: 2; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  .actions button {
+    padding: 10px 18px;
+    border: 1px solid #8B6F47;
+    border-radius: 6px;
+    background: #E5D5AA;
+    cursor: pointer;
+    font-size: 11px;
+    color: #4D3411;
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    transition: background 0.15s;
+  }
+  .actions button:hover { background: #DCC494; }
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: #9B8268;
+    margin-top: 14px;
+    line-height: 1.6;
+    font-style: italic;
+    font-family: 'Fraunces', Georgia, serif;
+  }
+  @media (max-width: 400px) {
+    body { padding: 12px; }
+    .title { font-size: 24px; }
+    .tile { font-size: 24px; }
+    .slot { width: 42px; height: 42px; font-size: 20px; }
+    .controls { grid-template-columns: repeat(3, 50px); grid-template-rows: 40px 40px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h2 class="sr-only">Letter Shift game: slide tiles to merge same letters into the next letter, then collect target word letters by tapping them.</h2>
+  <div class="head">
+    <div class="title">Letter Shift</div>
+    <div class="stats">
+      <span>Date <span id="day">—</span></span>
+      <span>Moves <span id="moves">0</span></span>
+      <span>Top <span id="top">A</span></span>
+    </div>
+  </div>
+  <div id="auth" class="auth">
+    <button id="signInBtn">Sign in with Google</button>
+    <div id="userInfo" style="display:none;">
+      <span id="userName"></span>
+      <span>Streak: <span id="currentStreak">0</span> (Best: <span id="bestStreak">0</span>)</span>
+      <button id="signOutBtn">Sign out</button>
+    </div>
+  </div>
+  <div class="target" id="target"></div>
+  <div class="meaning" id="meaning"></div>
+  <div class="msg" id="msg"></div>
+  <div class="grid" id="grid">
+    <div class="bg" id="bg"></div>
+  </div>
+  <div class="controls">
+    <button class="ls-up" data-dir="up" aria-label="Slide up">&uarr;</button>
+    <button class="ls-left" data-dir="left" aria-label="Slide left">&larr;</button>
+    <button class="ls-down" data-dir="down" aria-label="Slide down">&darr;</button>
+    <button class="ls-right" data-dir="right" aria-label="Slide right">&rarr;</button>
+  </div>
+  <div class="actions">
+    <button id="reset">Restart day</button>
+  </div>
+  <div class="hint">Arrow keys, buttons, or swipe to slide. Click a green-outlined tile to collect it.</div>
+</div>
+
+<script>
+(function(){
+  const SIZE = 5;
+  const SLIDE_MS = 150;
+  const WORDS = ('ABET ABUT ACHE ALIT ANTE ARCH AVER AVOW BACH BACK BADE BAIL BAIT BAKE BALE BALK BALL BAND BANG BANK BARB BARD BARE BARF BARK BASE BASH BASK BATE BAWL BEAD BEAM BEAN BEAR BEAT BEEF BEEN BEEP BELL BELT BEND BENT BIAS BIDE BIFF BIKE BILK BILL BIND BIRD BIRL BIRR BITE BITT BLAB BLAT BLED BLEW BLOB BLOT BLOW BLUB BLUE BLUR BOAT BODE BODY BOIL BOLT BOMB BOND BONE BONG BONK BOOK BOOM BOOT BORE BORN BOSS BOWL BRAG BRAY BRED BREW BRIM BUCK BUFF BULK BULL BUMP BUNG BUNK BUNT BUOY BURL BURN BURP BURR BURY BUSH BUSK BUSS BUST BUSY BUTT BUZZ CACA CAGE CAKE CALK CALL CALM CAME CAMP CANE CANT CARD CARE CART CASE CASH CAST CAVE CEDE CERE CHAP CHAR CHAT CHAW CHID CHIN CHIP CHOP CHUG CHUM CITE CLAD CLAM CLAP CLAW CLEW CLIP CLOG CLOP CLOT CLOY CLUB CLUE COAL COAT COAX COCK CODE COIF COIL COIN COKE COMB COME COMP CONE CONK COOK COOL COOP COPE COPY CORD CORE CORK CORN COSH COST COWL CRAB CRAM CRAP CREW CRIB CROP CROW CUBE CUFF CULL CURB CURE CURL CUSS DADO DAMN DAMP DANG DARE DARN DART DASH DATE DAUB DAWN DAZE DEAL DECK DEED DEEM DEFY DEKE DEMO DENT DENY DIAL DICE DIED DIET DIKE DINE DING DISC DISH DISK DISS DIVE DOCK DOFF DOLE DONE DOOM DOPE DOSS DOTE DOVE DOWN DOZE DRAG DRAW DREW DRIP DROP DRUB DRUG DRUM DUCK DUEL DULL DUMP DUNG DUNK DUPE DUSK DUST EARN EASE ECHO EDGE EDIT EMIT ENVY ESPY ETCH EVEN EXIT FACE FADE FAIL FAKE FALL FARE FARM FART FAST FATE FAWN FAZE FEAR FEED FEEL FELL FELT FEND FESS FETE FEUD FILE FILL FILM FIND FINE FINK FIRE FIRM FISH FIST FIZZ FLAG FLAP FLAT FLAW FLAY FLED FLEE FLEW FLEX FLIP FLIT FLOG FLOP FLOW FLUB FLUX FOAL FOAM FOIL FOLD FOND FOOL FOOT FORD FORK FORM FOUL FOWL FRAG FRAP FRAY FREE FRET FRIT FUEL FULL FUME FUND FUNK FURL FUSE FUSS FUTZ GAIN GAIT GALL GAME GANG GAOL GAPE GARB GASH GASP GATE GAVE GAWK GAWP GAZE GEAR GELD GIBE GIFT GILD GIMP GIRD GIVE GLOM GLOW GLUE GLUG GLUT GNAW GOAD GOLF GONE GONG GOOF GORE GOWN GRAB GRAY GREW GREY GRID GRIN GRIP GRIT GROW GRUB GULL GULP GUSH GUST GYBE HACK HAIL HALE HALT HAND HANG HARE HARK HARM HARP HASH HASP HAST HATE HATH HAUL HAVE HAWK HAZE HEAD HEAL HEAP HEAR HEAT HEED HEEL HEFT HELD HELM HELP HERD HEWN HIDE HIKE HILL HINT HIRE HISS HIVE HOAX HOCK HOLD HOLE HOME HONE HONK HOOD HOOF HOOK HOOP HOOT HOPE HORN HOSE HOST HOVE HOWL HUFF HULK HULL HUMP HUNG HUNT HURL HURT HUSH HUSK HYMN HYPE IDLE INCH IRON ITCH JACK JADE JAIL JAPE JAZZ JEER JELL JERK JEST JIBE JILT JINX JIVE JOIN JOKE JOLT JOSH JUKE JUMP JUNK KAYO KEEL KEEN KEEP KEPT KERN KICK KILL KINK KISS KITE KNAP KNEW KNIT KNOT KNOW LACE LACK LAID LAIN LAMB LAME LAND LARD LARK LASH LAST LAUD LAVE LAZE LEAD LEAF LEAK LEAN LEAP LEER LEFT LEND LENT LEVY LICK LIFT LIKE LILT LIME LIMP LINE LINK LISP LIST LIVE LOAD LOAF LOAN LOCK LOFT LOLL LONG LOOK LOOM LOOP LOOT LOPE LORD LOSE LOST LOUR LOVE LUBE LUCK LUFF LUGE LULL LUMP LURE LURK LUST MADE MAIL MAIM MAKE MARK MASK MATE MAUL MEET MELD MELT MEND MEOW MESS MIFF MILK MIME MIND MINE MISS MOAN MOCK MOOR MOOT MOPE MOVE MUCK MUFF MUSE MUSH MUST MUTE NAIL NAME NEAR NECK NEED NEST NICK NOCK NOSE NOTE NUKE NUMB OBEY OGLE OKAY OMEN OMIT OOZE OPEN OUST PACE PACK PAGE PAIN PAIR PALM PANT PARE PARK PART PASS PAVE PAWN PEAK PEAL PECK PEEK PEEL PEEP PEER PERK PICK PILE PINE PLAN PLAT PLAY PLOD PLOP PLOT PLOW PLUG POCK POKE POOL PORE POSE POST POUR POUT PRAY PRIM PROD PROP PUFF PULL PULP PUMP PURL PURR PUSH PUTT QUIP QUIT QUIZ RACE RAGE RAID RAIN RAKE RANG RANK RANT RAPE RATE RAZE READ REAM REAP REEF REEK REEL REIN RELY REND RENT REST RICE RIDE RILE RING RIOT RISE RISK RIVE ROAM ROAR ROCK RODE ROIL ROLL ROMP ROOF ROOM ROOT ROPE ROUT ROVE RUIN RULE RUSH RUST SACK SAID SAIL SALE SALT SASS SATE SAVE SAWN SCAB SCAM SCAN SCAR SCAT SCUD SCUM SEAL SEAM SEAT SEED SEEK SEEM SEEN SEEP SELL SEND SENT SEWN SHAG SHAM SHED SHIP SHIT SHOE SHOO SHOP SHOT SHOW SHUN SHUT SIDE SIFT SIGH SIGN SING SINK SIRE SITE SIZE SKEW SKID SKIM SKIN SKIP SLAB SLAG SLAM SLAP SLAT SLAY SLED SLEW SLID SLIM SLIP SLIT SLOG SLOP SLOT SLOW SLUE SLUG SLUM SLUR SMUT SNAG SNAP SNIP SNOW SNUB SOAK SOAP SOAR SOCK SOIL SOLD SOLE SOLO SORT SOUR SOWN SPAM SPAN SPAR SPAT SPAY SPED SPEW SPIN SPIT SPOT SPUD SPUR STAB STAG STAR STAY STEM STEP STET STEW STIR STOP STOW STUB STUD STUN SUCK SUIT SULK SUNG SUNK SURF SWAB SWAM SWAP SWAT SWAY SWIG SWIM SWOB SWOT SWUM TACK TAIL TALC TALK TAME TAMP TANK TAPE TASK TAXI TEAM TEAR TEEM TELL TEND TENT TERM TEST TEXT THAW THIN THUD TICK TIDE TILE TILT TIME TING TINT TIRE TOIL TOLD TOLL TONE TOOK TOOL TOOT TOPE TORE TORN TOSS TOTE TOUR TOUT TRAM TRAP TREE TREK TRIM TRIP TROD TROT TRUE TUBE TUCK TUNE TURF TURN TUSK TWIN TWIT TYPE UNDO URGE VAMP VARY VEER VEIL VEIN VEND VENT VEST VETO VIDE VIEW VISA VISE VOID VOTE WADE WAFT WAGE WAIL WAIT WAKE WALK WALL WANE WANT WARD WARM WARN WARP WASH WAUL WAVE WAWL WEAN WEAR WEED WEEP WELD WELL WELT WEND WENT WEPT WERE WERT WHAM WHAP WHET WHIP WHIR WHIZ WHOP WILL WILT WINE WINK WIPE WIRE WISH WIST WIVE WOKE WOLF WOOF WORD WORE WORK WORM WORN WOVE WRAP WRIT XRAY YACK YANK YARN YAUP YAWN YAWP YEAN YELL YELP YOKE YOWL ZERO ZEST ZING ZONE ZONK ZOOM').split(' ');
+
+  const definitions = {
+    abet: 'to encourage or assist in wrongdoing',
+    abut: 'to be adjacent to',
+    ache: 'a continuous dull pain',
+    alit: 'landed or descended',
+    ante: 'a stake put up by a player in poker',
+    arch: 'a curved structure',
+    aver: 'to affirm or declare',
+    avow: 'to declare openly',
+    bach: 'to live as a bachelor',
+    back: 'the rear surface',
+    bade: 'past tense of bid',
+    bail: 'security for release from custody',
+    bait: 'food used to attract animals',
+    bake: 'to cook by dry heat',
+    bale: 'a large bundle',
+    balk: 'to hesitate or refuse',
+    ball: 'a spherical object',
+    band: 'a group of musicians',
+    bang: 'a loud noise',
+    bank: 'a financial institution',
+    barb: 'a sharp projection',
+    bard: 'a poet',
+    bare: 'uncovered',
+    barf: 'to vomit',
+    bark: 'the sound a dog makes',
+    base: 'the bottom support',
+    bash: 'to strike violently',
+    bask: 'to lie in the sun',
+    bate: 'to reduce or restrain',
+    bawl: 'to cry loudly',
+    bead: 'a small sphere',
+    beam: 'a long piece of timber',
+    bean: 'a seed or pod',
+    bear: 'a large mammal',
+    beat: 'to strike repeatedly',
+    beef: 'meat from cattle',
+    been: 'past participle of be',
+    beep: 'a short high-pitched sound',
+    bell: 'a hollow object that rings',
+    belt: 'a strip of material',
+    bend: 'to curve',
+    bent: 'curved',
+    bias: 'prejudice',
+    bide: 'to wait',
+    biff: 'to strike',
+    bike: 'a bicycle',
+    bilk: 'to cheat',
+    bill: 'an invoice',
+    bind: 'to tie',
+    bird: 'a feathered animal',
+    birl: 'to spin',
+    birr: 'a whirring sound',
+    bite: 'to cut with teeth',
+    bitt: 'a post for securing ropes',
+    blab: 'to reveal secrets',
+    blat: 'to cry like a sheep',
+    bled: 'past tense of bleed',
+    blew: 'past tense of blow',
+    blob: 'a shapeless mass',
+    blot: 'a spot or stain',
+    blow: 'to move air',
+    blub: 'to weep noisily',
+    blue: 'the color',
+    blur: 'to make unclear',
+    boat: 'a vessel for water',
+    bode: 'to foreshadow',
+    body: 'the physical structure',
+    boil: 'to heat to bubbling',
+    bolt: 'a fastener',
+    bomb: 'an explosive device',
+    bond: 'a connection',
+    bone: 'a skeletal part',
+    bong: 'a deep resonant sound',
+    bonk: 'to hit',
+    book: 'a written work',
+    boom: 'a loud noise',
+    boot: 'a type of shoe',
+    bore: 'to make a hole',
+    born: 'brought into life',
+    boss: 'a supervisor',
+    bowl: 'a round dish',
+    brag: 'to boast',
+    bray: 'the sound of a donkey',
+    bred: 'past tense of breed',
+    brew: 'to make beer',
+    brim: 'the edge of a container',
+    buck: 'a male deer',
+    buff: 'to polish',
+    bulk: 'large size',
+    bull: 'a male bovine',
+    bump: 'a collision',
+    bung: 'a stopper',
+    bunk: 'a bed',
+    bunt: 'a baseball hit',
+    buoy: 'a floating device',
+    burl: 'a knot in wood',
+    burn: 'to be on fire',
+    burp: 'to expel gas',
+    burr: 'a rough edge',
+    bury: 'to inter',
+    bush: 'a shrub',
+    busk: 'to perform in public',
+    buss: 'to kiss',
+    bust: 'to break',
+    busy: 'occupied',
+    butt: 'the end',
+    buzz: 'a humming sound',
+    caca: 'feces (slang)',
+    cage: 'an enclosure',
+    cake: 'a baked dessert',
+    calk: 'to seal',
+    call: 'to shout',
+    calm: 'peaceful',
+    came: 'past tense of come',
+    camp: 'a place for tents',
+    cane: 'a walking stick',
+    cant: 'hypocritical talk',
+    card: 'a playing card',
+    care: 'concern',
+    cart: 'a wheeled vehicle',
+    case: 'a container',
+    cash: 'money',
+    cast: 'to throw',
+    cave: 'a hollow in rock',
+    cede: 'to yield',
+    cere: 'a waxy substance',
+    chap: 'a crack',
+    char: 'to burn',
+    chat: 'to converse',
+    chaw: 'chewing tobacco',
+    chid: 'past tense of chide',
+    chin: 'the lower face',
+    chip: 'a small piece',
+    chop: 'to cut',
+    chug: 'to drink quickly',
+    chum: 'a friend',
+    cite: 'to quote',
+    clad: 'covered',
+    clam: 'a shellfish',
+    clap: 'to strike hands',
+    claw: 'a sharp nail',
+    clew: 'a ball of thread',
+    clip: 'to cut',
+    clog: 'to block',
+    clop: 'a hoof sound',
+    clot: 'a thickened mass',
+    cloy: 'to sicken',
+    club: 'a group',
+    clue: 'a hint',
+    coal: 'a black mineral',
+    coat: 'outer covering',
+    coax: 'to persuade',
+    cock: 'a male bird',
+    code: 'a system of rules',
+    coif: 'a head covering',
+    coil: 'a spiral',
+    coin: 'a piece of money',
+    coke: 'a fuel',
+    comb: 'to groom hair',
+    come: 'to move toward',
+    comp: 'to accompany',
+    cone: 'a geometric shape',
+    conk: 'to hit on the head',
+    cook: 'to prepare food',
+    cool: 'moderately cold',
+    coop: 'a cage for poultry',
+    cope: 'to manage',
+    copy: 'a duplicate',
+    cord: 'a string',
+    core: 'the center',
+    cork: 'a stopper',
+    corn: 'a grain',
+    cosh: 'a weapon',
+    cost: 'the price',
+    cowl: 'a hood',
+    crab: 'a crustacean',
+    cram: 'to stuff',
+    crap: 'excrement',
+    crew: 'a group of workers',
+    crib: 'a baby bed',
+    crop: 'a plant product',
+    crow: 'a bird',
+    cube: 'a three-dimensional square',
+    cuff: 'to strike',
+    cull: 'to select',
+    curb: 'to restrain',
+    cure: 'to heal',
+    curl: 'to twist',
+    cuss: 'to swear',
+    dado: 'a groove',
+    damn: 'to condemn',
+    damp: 'slightly wet',
+    dang: 'damn (euphemism)',
+    dare: 'to challenge',
+    darn: 'to mend',
+    dart: 'to move quickly',
+    dash: 'to run quickly',
+    date: 'a day or fruit',
+    daub: 'to smear',
+    dawn: 'daybreak',
+    daze: 'to stun',
+    deal: 'to distribute',
+    deck: 'a platform',
+    deed: 'an action',
+    deem: 'to judge',
+    defy: 'to resist',
+    deke: 'to fake out',
+    demo: 'a demonstration',
+    dent: 'an indentation',
+    deny: 'to refuse',
+    dial: 'to call',
+    dice: 'to cut',
+    died: 'past tense of die',
+    diet: 'food intake',
+    dike: 'a barrier',
+    dine: 'to eat',
+    ding: 'a dent',
+    disc: 'a flat circle',
+    dish: 'a plate',
+    disk: 'a disk',
+    diss: 'to disrespect',
+    dive: 'to plunge',
+    dock: 'a platform',
+    doff: 'to remove',
+    dole: 'to distribute',
+    done: 'completed',
+    doom: 'fate',
+    dope: 'information',
+    doss: 'to sleep',
+    dote: 'to love excessively',
+    dove: 'past tense of dive',
+    down: 'toward the ground',
+    doze: 'to sleep lightly',
+    drag: 'to pull',
+    draw: 'to pull',
+    drew: 'past tense of draw',
+    drip: 'to fall in drops',
+    drop: 'to fall',
+    drub: 'to beat',
+    drug: 'a substance',
+    drum: 'a musical instrument',
+    duck: 'a bird',
+    duel: 'a contest',
+    dull: 'not sharp',
+    dump: 'to discard',
+    dung: 'animal waste',
+    dunk: 'to immerse',
+    dupe: 'to deceive',
+    dusk: 'twilight',
+    dust: 'fine particles',
+    earn: 'to gain',
+    ease: 'comfort',
+    echo: 'a sound reflection',
+    edge: 'the border',
+    edit: 'to revise',
+    emit: 'to send out',
+    envy: 'jealousy',
+    espy: 'to catch sight of',
+    etch: 'to engrave',
+    even: 'level',
+    exit: 'a way out',
+    face: 'the front',
+    fade: 'to lose color',
+    fail: 'to not succeed',
+    fake: 'not genuine',
+    fall: 'to drop',
+    fare: 'a fee',
+    farm: 'land for agriculture',
+    fart: 'to expel gas',
+    fast: 'quick',
+    fate: 'destiny',
+    fawn: 'a young deer',
+    faze: 'to disturb',
+    fear: 'anxiety',
+    feed: 'to give food',
+    feel: 'to touch',
+    fell: 'past tense of fall',
+    felt: 'a fabric',
+    fend: 'to defend',
+    fess: 'to confess',
+    fete: 'to honor',
+    feud: 'a quarrel',
+    file: 'a folder',
+    fill: 'to make full',
+    film: 'a movie',
+    find: 'to discover',
+    fine: 'excellent',
+    fink: 'an informer',
+    fire: 'flames',
+    firm: 'solid',
+    fish: 'an aquatic animal',
+    fist: 'a clenched hand',
+    fizz: 'bubbling sound',
+    flag: 'a banner',
+    flap: 'to wave',
+    flat: 'level',
+    flaw: 'a defect',
+    flay: 'to strip skin',
+    fled: 'past tense of flee',
+    flee: 'to run away',
+    flew: 'past tense of fly',
+    flex: 'to bend',
+    flip: 'to turn over',
+    flit: 'to move lightly',
+    flog: 'to whip',
+    flop: 'to fall heavily',
+    flow: 'to move smoothly',
+    flub: 'to bungle',
+    flux: 'change',
+    foal: 'a young horse',
+    foam: 'bubbles',
+    foil: 'to thwart',
+    fold: 'to bend',
+    fond: 'affectionate',
+    fool: 'a stupid person',
+    foot: 'a body part',
+    ford: 'to cross a river',
+    fork: 'a utensil',
+    form: 'shape',
+    foul: 'dirty',
+    fowl: 'a bird',
+    frag: 'to kill',
+    frap: 'to bind',
+    fray: 'a fight',
+    free: 'not imprisoned',
+    fret: 'to worry',
+    frit: 'frightened',
+    fuel: 'energy source',
+    full: 'complete',
+    fume: 'smoke',
+    fund: 'money',
+    funk: 'a style of music',
+    furl: 'to roll up',
+    fuse: 'to melt',
+    fuss: 'unnecessary excitement',
+    futz: 'to waste time',
+    gain: 'to obtain',
+    gait: 'a manner of walking',
+    gall: 'boldness',
+    game: 'an activity',
+    gang: 'a group',
+    gaol: 'jail',
+    gape: 'to stare',
+    garb: 'clothing',
+    gash: 'a cut',
+    gasp: 'to breathe sharply',
+    gate: 'an entrance',
+    gave: 'past tense of give',
+    gawk: 'to stare stupidly',
+    gawp: 'to gape',
+    gaze: 'to look steadily',
+    gear: 'equipment',
+    geld: 'to castrate',
+    gibe: 'to taunt',
+    gift: 'a present',
+    gild: 'to cover with gold',
+    gimp: 'to limp',
+    gird: 'to encircle',
+    give: 'to provide',
+    glom: 'to steal',
+    glow: 'to shine',
+    glue: 'an adhesive',
+    glug: 'a gurgling sound',
+    glut: 'an excess',
+    gnaw: 'to bite',
+    goad: 'to provoke',
+    golf: 'a sport',
+    gone: 'departed',
+    gong: 'a bell',
+    goof: 'a mistake',
+    gore: 'blood',
+    gown: 'a dress',
+    grab: 'to seize',
+    gray: 'a color',
+    grew: 'past tense of grow',
+    grey: 'a color',
+    grid: 'a network',
+    grin: 'a smile',
+    grip: 'to hold tightly',
+    grit: 'sand',
+    grow: 'to increase',
+    grub: 'a larva',
+    gull: 'a bird',
+    gulp: 'to swallow',
+    gush: 'to flow out',
+    gust: 'a wind',
+    gybe: 'to change direction',
+    hack: 'to cut',
+    hail: 'to greet',
+    hale: 'healthy',
+    halt: 'to stop',
+    hand: 'a body part',
+    hang: 'to suspend',
+    hare: 'a rabbit',
+    hark: 'to listen',
+    harm: 'damage',
+    harp: 'a musical instrument',
+    hash: 'chopped meat',
+    hasp: 'a fastener',
+    hast: 'haste',
+    hate: 'to dislike',
+    hath: 'has',
+    haul: 'to pull',
+    have: 'to possess',
+    hawk: 'a bird',
+    haze: 'mist',
+    head: 'the top',
+    heal: 'to cure',
+    heap: 'a pile',
+    hear: 'to perceive sound',
+    heat: 'warmth',
+    heed: 'to pay attention',
+    heel: 'the back of the foot',
+    heft: 'weight',
+    held: 'past tense of hold',
+    helm: 'a steering wheel',
+    help: 'assistance',
+    herd: 'a group of animals',
+    hewn: 'cut',
+    hide: 'to conceal',
+    hike: 'a walk',
+    hill: 'an elevation',
+    hint: 'a clue',
+    hire: 'to employ',
+    hiss: 'a sound',
+    hive: 'a bee home',
+    hoax: 'a deception',
+    hock: 'to pawn',
+    hold: 'to grasp',
+    hole: 'an opening',
+    home: 'a residence',
+    hone: 'to sharpen',
+    honk: 'a sound',
+    hood: 'a covering',
+    hoof: 'an animal foot',
+    hook: 'a curved tool',
+    hoop: 'a ring',
+    hoot: 'an owl sound',
+    hope: 'expectation',
+    horn: 'a projection',
+    hose: 'a tube',
+    host: 'a person who entertains',
+    hove: 'past tense of heave',
+    howl: 'a loud cry',
+    huff: 'a fit of anger',
+    hulk: 'a large person',
+    hull: 'the outer covering',
+    hump: 'a rounded mass',
+    hung: 'past tense of hang',
+    hunt: 'to pursue',
+    hurl: 'to throw',
+    hurt: 'pain',
+    hush: 'silence',
+    husk: 'an outer covering',
+    hymn: 'a song',
+    hype: 'promotion',
+    idle: 'inactive',
+    inch: 'a unit of length',
+    iron: 'a metal',
+    itch: 'an irritation',
+    jack: 'a tool',
+    jade: 'a gem',
+    jail: 'a prison',
+    jape: 'a joke',
+    jazz: 'a music style',
+    jeer: 'to mock',
+    jell: 'to congeal',
+    jerk: 'to pull suddenly',
+    jest: 'a joke',
+    jibe: 'to agree',
+    jilt: 'to abandon',
+    jinx: 'bad luck',
+    jive: 'to deceive',
+    join: 'to connect',
+    joke: 'a funny story',
+    jolt: 'a sudden movement',
+    josh: 'to tease',
+    juke: 'to fake',
+    jump: 'to leap',
+    junk: 'rubbish',
+    kayo: 'to knock out',
+    keel: 'the bottom of a ship',
+    keen: 'sharp',
+    keep: 'to retain',
+    kept: 'past tense of keep',
+    kern: 'to form kernels',
+    kick: 'to strike with foot',
+    kill: 'to end life',
+    kink: 'a twist',
+    kiss: 'to touch lips',
+    kite: 'a toy',
+    knap: 'to break',
+    knew: 'past tense of know',
+    knit: 'to join',
+    knot: 'a tangle',
+    know: 'to be aware',
+    lace: 'a fabric',
+    lack: 'absence',
+    laid: 'past tense of lay',
+    lain: 'past participle of lie',
+    lamb: 'a young sheep',
+    lame: 'crippled',
+    land: 'earth',
+    lard: 'fat',
+    lark: 'a bird',
+    lash: 'to whip',
+    last: 'final',
+    laud: 'to praise',
+    lave: 'to wash',
+    laze: 'to be lazy',
+    lead: 'to guide',
+    leaf: 'a plant part',
+    leak: 'to escape',
+    lean: 'to incline',
+    leap: 'to jump',
+    leer: 'to look slyly',
+    left: 'past tense of leave',
+    lend: 'to give temporarily',
+    lent: 'past tense of lend',
+    levy: 'to impose',
+    lick: 'to touch with tongue',
+    lift: 'to raise',
+    like: 'similar',
+    lilt: 'a rhythm',
+    lime: 'a fruit',
+    limp: 'to walk with difficulty',
+    line: 'a mark',
+    link: 'to connect',
+    lisp: 'to speak with a lisp',
+    list: 'a series',
+    live: 'to exist',
+    load: 'to put cargo',
+    loaf: 'bread',
+    loan: 'borrowed money',
+    lock: 'to secure',
+    loft: 'an attic',
+    loll: 'to lounge',
+    long: 'extended',
+    look: 'to see',
+    loom: 'to appear',
+    loop: 'a circle',
+    loot: 'stolen goods',
+    lope: 'to run',
+    lord: 'a noble',
+    lose: 'to misplace',
+    lost: 'misplaced',
+    lour: 'to frown',
+    love: 'affection',
+    lube: 'lubricant',
+    luck: 'fortune',
+    luff: 'to sail',
+    luge: 'a sled',
+    lull: 'a calm',
+    lump: 'a mass',
+    lure: 'to attract',
+    lurk: 'to hide',
+    lust: 'strong desire',
+    made: 'past tense of make',
+    mail: 'letters',
+    maim: 'to injure',
+    make: 'to create',
+    mark: 'a sign',
+    mask: 'a covering',
+    mate: 'a partner',
+    maul: 'to injure',
+    meet: 'to encounter',
+    meld: 'to blend',
+    melt: 'to liquefy',
+    mend: 'to repair',
+    meow: 'cat sound',
+    mess: 'disorder',
+    miff: 'to annoy',
+    milk: 'a liquid',
+    mime: 'to imitate',
+    mind: 'the intellect',
+    mine: 'a excavation',
+    miss: 'to fail to hit',
+    moan: 'a sound of pain',
+    mock: 'to ridicule',
+    moor: 'to tie up',
+    moot: 'debatable',
+    mope: 'to be gloomy',
+    move: 'to change position',
+    muck: 'dirt',
+    muff: 'to bungle',
+    muse: 'to ponder',
+    mush: 'soft food',
+    must: 'necessary',
+    mute: 'silent',
+    nail: 'a fastener',
+    name: 'a designation',
+    near: 'close',
+    neck: 'the throat',
+    need: 'requirement',
+    nest: 'a bird home',
+    nick: 'a small cut',
+    nock: 'to fit an arrow',
+    nose: 'the organ',
+    note: 'a remark',
+    nuke: 'to destroy',
+    numb: 'without feeling',
+    obey: 'to comply',
+    ogle: 'to stare',
+    okay: 'acceptable',
+    omen: 'a sign',
+    omit: 'to exclude',
+    ooze: 'to seep',
+    open: 'not closed',
+    oust: 'to expel',
+    pace: 'a step',
+    pack: 'to fill',
+    page: 'a sheet',
+    pain: 'suffering',
+    pair: 'two',
+    palm: 'a tree',
+    pant: 'to breathe heavily',
+    pare: 'to trim',
+    park: 'an area',
+    part: 'a portion',
+    pass: 'to go by',
+    pave: 'to cover',
+    pawn: 'a chess piece',
+    peak: 'the top',
+    peal: 'a ringing',
+    peck: 'to bite',
+    peek: 'to look',
+    peel: 'to remove skin',
+    peep: 'a sound',
+    peer: 'to look',
+    perk: 'a benefit',
+    pick: 'to choose',
+    pile: 'a heap',
+    pine: 'a tree',
+    plan: 'a scheme',
+    plat: 'to braid',
+    play: 'to engage in activity',
+    plod: 'to walk slowly',
+    plop: 'to fall',
+    plot: 'a story',
+    plow: 'to till',
+    plug: 'a stopper',
+    pock: 'a mark',
+    poke: 'to prod',
+    pool: 'a body of water',
+    pore: 'to study',
+    pose: 'to present',
+    post: 'a pole',
+    pour: 'to flow',
+    pout: 'to sulk',
+    pray: 'to petition',
+    prim: 'proper',
+    prod: 'to poke',
+    prop: 'to support',
+    puff: 'to blow',
+    pull: 'to draw',
+    pulp: 'soft matter',
+    pump: 'to operate a pump',
+    purl: 'a knitting stitch',
+    purr: 'cat sound',
+    push: 'to press',
+    putt: 'a golf shot',
+    quip: 'a witty remark',
+    quit: 'to stop',
+    quiz: 'a test',
+    race: 'a competition',
+    rage: 'anger',
+    raid: 'an attack',
+    rain: 'precipitation',
+    rake: 'a tool',
+    rang: 'past tense of ring',
+    rank: 'a position',
+    rant: 'to speak wildly',
+    rape: 'to assault',
+    rate: 'a speed',
+    raze: 'to destroy',
+    read: 'to interpret',
+    ream: 'to enlarge',
+    reap: 'to harvest',
+    reef: 'a ridge',
+    reek: 'to smell',
+    reel: 'to stagger',
+    rein: 'to control',
+    rely: 'to depend',
+    rend: 'to tear',
+    rent: 'payment',
+    rest: 'to relax',
+    rice: 'a grain',
+    ride: 'to travel',
+    rile: 'to irritate',
+    ring: 'a circle',
+    riot: 'a disturbance',
+    rise: 'to go up',
+    risk: 'danger',
+    rive: 'to split',
+    roam: 'to wander',
+    roar: 'a loud sound',
+    rock: 'a stone',
+    rode: 'past tense of ride',
+    roil: 'to disturb',
+    roll: 'to turn',
+    romp: 'to play',
+    roof: 'a covering',
+    room: 'a space',
+    root: 'a plant part',
+    rope: 'a cord',
+    rout: 'to defeat',
+    rove: 'to wander',
+    ruin: 'destruction',
+    rule: 'a principle',
+    rush: 'to hurry',
+    rust: 'corrosion',
+    sack: 'a bag',
+    said: 'past tense of say',
+    sail: 'a cloth',
+    sale: 'a transaction',
+    salt: 'a seasoning',
+    sass: 'impudence',
+    sate: 'to satisfy',
+    save: 'to rescue',
+    sawn: 'past participle of saw',
+    scab: 'a crust',
+    scam: 'a fraud',
+    scan: 'to examine',
+    scar: 'a mark',
+    scat: 'to leave',
+    scud: 'to run',
+    scum: 'a layer',
+    seal: 'to close',
+    seam: 'a join',
+    seat: 'a place to sit',
+    seed: 'a plant embryo',
+    seek: 'to look for',
+    seem: 'to appear',
+    seen: 'past tense of see',
+    seep: 'to ooze',
+    sell: 'to exchange',
+    send: 'to dispatch',
+    sent: 'past tense of send',
+    sewn: 'past participle of sew',
+    shag: 'rough hair',
+    sham: 'fake',
+    shed: 'to discard',
+    ship: 'a vessel',
+    shit: 'excrement',
+    shoe: 'footwear',
+    shoo: 'to drive away',
+    shop: 'a store',
+    shot: 'a discharge',
+    show: 'to display',
+    shun: 'to avoid',
+    shut: 'closed',
+    side: 'a surface',
+    sift: 'to separate',
+    sigh: 'a sound',
+    sign: 'a symbol',
+    sing: 'to vocalize',
+    sink: 'to descend',
+    sire: 'a father',
+    site: 'a location',
+    size: 'dimensions',
+    skew: 'to distort',
+    skid: 'to slide',
+    skim: 'to remove surface',
+    skin: 'covering',
+    skip: 'to jump',
+    slab: 'a thick slice',
+    slag: 'waste',
+    slam: 'to shut forcefully',
+    slap: 'to strike',
+    slat: 'a strip',
+    slay: 'to kill',
+    sled: 'a vehicle',
+    slew: 'past tense of slay',
+    slid: 'past tense of slide',
+    slim: 'thin',
+    slip: 'to slide',
+    slit: 'a cut',
+    slog: 'to work hard',
+    slop: 'to spill',
+    slot: 'an opening',
+    slow: 'not fast',
+    slue: 'to turn',
+    slug: 'a snail',
+    slum: 'a poor area',
+    slur: 'to speak indistinctly',
+    smut: 'dirt',
+    snag: 'to catch',
+    snap: 'to break',
+    snip: 'to cut',
+    snow: 'precipitation',
+    snub: 'to ignore',
+    soak: 'to wet',
+    soap: 'a cleanser',
+    soar: 'to fly high',
+    sock: 'a garment',
+    soil: 'earth',
+    sold: 'past tense of sell',
+    sole: 'only',
+    solo: 'alone',
+    sort: 'to classify',
+    sour: 'acidic',
+    sown: 'past participle of sow',
+    spam: 'unsolicited mail',
+    span: 'a length',
+    spar: 'a pole',
+    spat: 'past tense of spit',
+    spay: 'to sterilize',
+    sped: 'past tense of speed',
+    spew: 'to eject',
+    spin: 'to rotate',
+    spit: 'saliva',
+    spot: 'a mark',
+    spud: 'a potato',
+    spur: 'to encourage',
+    stab: 'to pierce',
+    stag: 'a male deer',
+    star: 'a celestial body',
+    stay: 'to remain',
+    stem: 'a plant part',
+    step: 'to walk',
+    stet: 'let it stand',
+    stew: 'to cook slowly',
+    stir: 'to mix',
+    stop: 'to halt',
+    stow: 'to store',
+    stub: 'a remnant',
+    stud: 'a male animal',
+    stun: 'to shock',
+    suck: 'to draw in',
+    suit: 'clothing',
+    sulk: 'to pout',
+    sung: 'past participle of sing',
+    sunk: 'past tense of sink',
+    surf: 'waves',
+    swab: 'to clean',
+    swam: 'past tense of swim',
+    swap: 'to exchange',
+    swat: 'to hit',
+    sway: 'to swing',
+    swig: 'to drink',
+    swim: 'to move in water',
+    swob: 'to swab',
+    swot: 'to study',
+    swum: 'past participle of swim',
+    tack: 'a nail',
+    tail: 'the end',
+    talc: 'a powder',
+    talk: 'to speak',
+    tame: 'domesticated',
+    tamp: 'to pack',
+    tank: 'a container',
+    tape: 'a strip',
+    task: 'a job',
+    taxi: 'a cab',
+    team: 'a group',
+    tear: 'to rip',
+    teem: 'to abound',
+    tell: 'to inform',
+    tend: 'to care for',
+    tent: 'a shelter',
+    term: 'a word',
+    test: 'to examine',
+    text: 'written words',
+    thaw: 'to melt',
+    thin: 'not thick',
+    thud: 'a dull sound',
+    tick: 'a sound',
+    tide: 'the sea level',
+    tile: 'a covering',
+    tilt: 'to incline',
+    time: 'duration',
+    ting: 'a sound',
+    tint: 'a color',
+    tire: 'to fatigue',
+    toil: 'hard work',
+    told: 'past tense of tell',
+    toll: 'a fee',
+    tone: 'a sound quality',
+    took: 'past tense of take',
+    tool: 'an instrument',
+    toot: 'a sound',
+    tope: 'to drink',
+    tore: 'past tense of tear',
+    torn: 'ripped',
+    toss: 'to throw',
+    tote: 'to carry',
+    tour: 'a journey',
+    tout: 'to promote',
+    tram: 'a vehicle',
+    trap: 'to catch',
+    tree: 'a plant',
+    trek: 'a journey',
+    trim: 'to cut',
+    trip: 'to stumble',
+    trod: 'past tense of tread',
+    trot: 'to run',
+    true: 'accurate',
+    tube: 'a cylinder',
+    tuck: 'to fold',
+    tune: 'a melody',
+    turf: 'grass',
+    turn: 'to rotate',
+    tusk: 'a tooth',
+    twin: 'one of two',
+    twit: 'a fool',
+    type: 'a category',
+    undo: 'to reverse',
+    urge: 'to encourage',
+    vamp: 'a shoe part',
+    vary: 'to differ',
+    veer: 'to change direction',
+    veil: 'a covering',
+    vein: 'a blood vessel',
+    vend: 'to sell',
+    vent: 'an opening',
+    vest: 'a garment',
+    veto: 'to forbid',
+    vide: 'see',
+    view: 'to see',
+    visa: 'a permit',
+    vise: 'a tool',
+    void: 'empty',
+    vote: 'to choose',
+    wade: 'to walk in water',
+    waft: 'to float',
+    wage: 'payment',
+    wail: 'to cry',
+    wait: 'to stay',
+    wake: 'to arouse',
+    walk: 'to move on foot',
+    wall: 'a barrier',
+    wane: 'to decrease',
+    want: 'to desire',
+    ward: 'to protect',
+    warm: 'not cold',
+    warn: 'to caution',
+    warp: 'to distort',
+    wash: 'to clean',
+    waul: 'to cry',
+    wave: 'to move hand',
+    wawl: 'to wail',
+    wean: 'to accustom',
+    wear: 'to have on',
+    weed: 'a plant',
+    weep: 'to cry',
+    weld: 'to join',
+    well: 'a source',
+    welt: 'a ridge',
+    wend: 'to go',
+    went: 'past tense of go',
+    wept: 'past tense of weep',
+    were: 'past tense of be',
+    wert: 'were',
+    wham: 'to hit',
+    whap: 'to strike',
+    whet: 'to sharpen',
+    whip: 'to lash',
+    whir: 'a sound',
+    whiz: 'to move fast',
+    whop: 'to defeat',
+    will: 'determination',
+    wilt: 'to droop',
+    wine: 'an alcoholic drink',
+    wink: 'to blink',
+    wipe: 'to clean',
+    wire: 'a conductor',
+    wish: 'to desire',
+    wist: 'knew',
+    wive: 'to marry',
+    woke: 'past tense of wake',
+    wolf: 'an animal',
+    woof: 'dog sound',
+    word: 'a unit of language',
+    wore: 'past tense of wear',
+    work: 'labor',
+    worm: 'an animal',
+    worn: 'damaged',
+    wove: 'past tense of weave',
+    wrap: 'to cover',
+    writ: 'written',
+    xray: 'to examine',
+    yack: 'to talk',
+    yank: 'to pull',
+    yarn: 'thread',
+    yaup: 'to yelp',
+    yawn: 'to open mouth',
+    yawp: 'to yelp',
+    yean: 'to give birth',
+    yell: 'to shout',
+    yelp: 'a sharp cry',
+    yoke: 'a harness',
+    yowl: 'to howl',
+    zero: 'nothing',
+    zest: 'enthusiasm',
+    zing: 'energy',
+    zone: 'an area',
+    zonk: 'to hit',
+    zoom: 'to move fast'
+  };
+
+  const EPOCH = Date.UTC(2026, 4, 5);
+  function dayIndex(){
+    const d = new Date();
+    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.floor((utc - EPOCH) / 86400000);
+  }
+  function seedRand(seed){
+    let s = seed | 0;
+    return function(){
+      s = (s * 1664525 + 1013904223) | 0;
+      return ((s >>> 0) % 1000000) / 1000000;
+    };
+  }
+
+  function rnd(){
+    rngCalls++;
+    return rng();
+  }
+ 
+  const STORAGE_KEY = 'letterShift-state';
+  let tiles = [], target, collected, moves, gameOver, won, animating, tileId, rng, rngCalls = 0;
+
+  function saveState(){
+    try {
+      const state = {
+        day: dayIndex(),
+        tiles: tiles.map(({id,row,col,value}) => ({id,row,col,value})),
+        target,
+        collected,
+        moves,
+        gameOver,
+        won,
+        tileId,
+        rngCalls,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      if (window.auth?.currentUser?.uid) {
+        saveStateToFirestore(window.auth.currentUser.uid, state);
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }
+
+  async function saveStateToFirestore(userId, state){
+    try {
+      if (!window.db || !window.firebaseDoc || !window.firebaseSetDoc) return;
+      await window.firebaseSetDoc(window.firebaseDoc(window.db, 'gameStates', userId), state);
+    } catch (e) {
+      console.error('Save game state error:', e);
+    }
+  }
+
+  async function loadStateFromFirestore(userId){
+    try {
+      if (!window.db || !window.firebaseDoc || !window.firebaseGetDoc) return null;
+      const docRef = window.firebaseDoc(window.db, 'gameStates', userId);
+      const docSnap = await window.firebaseGetDoc(docRef);
+      if (!docSnap.exists()) return null;
+      const state = docSnap.data();
+      if (!state || state.day !== dayIndex() || !Array.isArray(state.tiles) || !Array.isArray(state.target) || !Array.isArray(state.collected)) return null;
+      return state;
+    } catch (e) {
+      console.error('Load game state error:', e);
+      return null;
+    }
+  }
+
+  function applyState(state){
+    const di = dayIndex();
+    tiles = state.tiles.map(t => ({ ...t, spawning: false, merging: false }));
+    target = state.target;
+    collected = state.collected;
+    moves = state.moves;
+    gameOver = state.gameOver;
+    won = state.won;
+    tileId = state.tileId || 0;
+    rngCalls = state.rngCalls || 0;
+    rng = seedRand(di * 7919);
+    for (let i = 0; i < rngCalls; i++) rng();
+    animating = false;
+    const date = new Date(EPOCH + di * 86400000);
+    document.getElementById('day').textContent = date.toLocaleDateString();
+    render();
+  }
+
+  async function syncGameStateForUser(userId){
+    if (!userId) return;
+    const firestoreState = await loadStateFromFirestore(userId);
+    if (firestoreState) {
+      applyState(firestoreState);
+    } else {
+      const localState = loadState();
+      if (localState) {
+        await saveStateToFirestore(userId, localState);
+      }
+    }
+  }
+
+  async function restoreLocalGameState(){
+    const localState = loadState();
+    if (localState) applyState(localState);
+  }
+
+  // Expose save/load helpers for auth-driven persistence
+  window.syncGameStateForUser = syncGameStateForUser;
+  window.restoreLocalGameState = restoreLocalGameState;
+  window.saveState = saveState;
+  window.newGame = newGame;
+
+  function loadState(){
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const state = JSON.parse(raw);
+      if (!state || state.day !== dayIndex()) return null;
+      if (!Array.isArray(state.tiles) || !Array.isArray(state.target) || !Array.isArray(state.collected)) return null;
+      return state;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clearState(){
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  }
+
+  function ch(n){ return n === 0 ? '' : String.fromCharCode(64 + n); }
+  function tier(v){ return 't' + v; }
+  function tileAt(r, c){ return tiles.find(t => t.row === r && t.col === c && !t.merging); }
+  function maxValue(){ return tiles.reduce((m, t) => Math.max(m, t.merging ? 0 : t.value), 0); }
+
+  function spawnTile(){
+    const occupied = new Set();
+    for (const t of tiles) if (!t.merging) occupied.add(t.row * SIZE + t.col);
+    const empty = [];
+    for (let i = 0; i < SIZE * SIZE; i++) {
+      if (!occupied.has(i)) empty.push([Math.floor(i / SIZE), i % SIZE]);
+    }
+    if (!empty.length) return null;
+    const [r, c] = empty[Math.floor(rnd() * empty.length)];
+    const mx = maxValue();
+    let value;
+    if (mx <= 4) {
+      const x = rnd();
+      value = x < 0.7 ? 1 : x < 0.95 ? 2 : 3;
+    } else {
+      const lo = Math.max(1, mx - 5);
+      const hi = Math.max(2, mx - 2);
+      const range = hi - lo;
+      const x = rnd();
+      const offset = Math.floor(x * x * (range + 1));
+      value = lo + Math.min(offset, range);
+    }
+    const newTile = { id: ++tileId, value, row: r, col: c, spawning: true };
+    tiles.push(newTile);
+    return newTile;
+  }
+
+  function newGame(reshuffle){
+    const di = dayIndex();
+    if (reshuffle) clearState();
+
+    const saved = !reshuffle && loadState();
+    if (saved) {
+      tiles = saved.tiles.map(t => ({ ...t, spawning: false, merging: false }));
+      target = saved.target;
+      const word = String.fromCharCode(...target.map(n => n + 64));
+      const meaning = definitions[word.toLowerCase()] || 'Definition not available';
+      document.getElementById('meaning').textContent = meaning;
+      collected = saved.collected;
+      moves = saved.moves;
+      gameOver = saved.gameOver;
+      won = saved.won;
+      tileId = saved.tileId || 0;
+      rngCalls = saved.rngCalls || 0;
+      rng = seedRand(di * 7919);
+      for (let i = 0; i < rngCalls; i++) rng();
+      animating = false;
+      const date = new Date(EPOCH + di * 86400000);
+      document.getElementById('day').textContent = date.toLocaleDateString();
+      render();
+      return;
+    }
+
+    tiles = [];
+    tileId = 0;
+    rngCalls = 0;
+    rng = seedRand(di * 7919 + (reshuffle ? Date.now() : 0));
+    const word = WORDS[di % WORDS.length];
+    // const word = 'AAAA'; // for testing
+    target = [...word].map(c => c.charCodeAt(0) - 64);
+    const meaning = definitions[word.toLowerCase()] || 'Definition not available';
+    document.getElementById('meaning').textContent = meaning;
+    collected = Array(target.length).fill(false);
+    moves = 0;
+    gameOver = false;
+    won = false;
+    animating = false;
+    const date = new Date(EPOCH + di * 86400000);
+    document.getElementById('day').textContent = date.toLocaleDateString();
+    for (let i = 0; i < 4; i++) spawnTile();
+    render();
+    saveState();
+  }
+
+  function processSlide(dir){
+    const slideToEnd = dir === 'right' || dir === 'down';
+    const lines = [];
+    if (dir === 'left' || dir === 'right') {
+      for (let r = 0; r < SIZE; r++) {
+        const line = [];
+        for (let c = 0; c < SIZE; c++) line.push({ r, c });
+        lines.push(line);
+      }
+    } else {
+      for (let c = 0; c < SIZE; c++) {
+        const line = [];
+        for (let r = 0; r < SIZE; r++) line.push({ r, c });
+        lines.push(line);
+      }
+    }
+    let anyMoved = false;
+    const merges = [];
+    for (const line of lines) {
+      const lineTiles = line.map(p => tileAt(p.r, p.c)).filter(t => t);
+      if (slideToEnd) lineTiles.reverse();
+      let placeOffset = 0;
+      for (let i = 0; i < lineTiles.length; i++) {
+        const curr = lineTiles[i];
+        const peek = lineTiles[i + 1];
+        const targetIdx = slideToEnd ? line.length - 1 - placeOffset : placeOffset;
+        const cell = line[targetIdx];
+        if (peek && peek.value === curr.value && curr.value < 26) {
+          if (peek.row !== cell.r || peek.col !== cell.c || curr.row !== cell.r || curr.col !== cell.c) anyMoved = true;
+          curr.row = cell.r; curr.col = cell.c;
+          peek.row = cell.r; peek.col = cell.c;
+          merges.push({ keep: curr, drop: peek, newValue: curr.value + 1, r: cell.r, c: cell.c });
+          placeOffset++;
+          i++;
+        } else {
+          if (curr.row !== cell.r || curr.col !== cell.c) anyMoved = true;
+          curr.row = cell.r; curr.col = cell.c;
+          placeOffset++;
+        }
+      }
+    }
+    return { anyMoved, merges };
+  }
+
+  function slide(dir){
+    if (gameOver || animating) return;
+    const snapshot = tiles.map(t => ({ id: t.id, row: t.row, col: t.col }));
+    const { anyMoved, merges } = processSlide(dir);
+    if (!anyMoved) {
+      for (const t of tiles) {
+        const snap = snapshot.find(s => s.id === t.id);
+        if (snap) { t.row = snap.row; t.col = snap.col; }
+      }
+      const grid = document.getElementById('grid');
+      grid.classList.remove('shake');
+      void grid.offsetWidth;
+      grid.classList.add('shake');
+      return;
+    }
+    animating = true;
+    for (const m of merges) m.drop.merging = true;
+    render();
+    setTimeout(() => {
+      tiles = tiles.filter(t => !t.merging);
+      for (const m of merges) {
+        m.keep.value = m.newValue;
+        m.keep.spawning = true;
+      }
+      spawnTile();
+      moves++;
+      checkEnd();
+      animating = false;
+      render();
+      saveState();
+      setTimeout(() => { for (const t of tiles) t.spawning = false; }, 200);
+    }, SLIDE_MS);
+  }
+
+  function tap(tileIdNum){
+    if (gameOver || animating) return;
+    const t = tiles.find(t => t.id === tileIdNum);
+    if (!t || t.merging) return;
+    const idx = target.findIndex((tv, i) => tv === t.value && !collected[i]);
+    if (idx === -1) return;
+    collected[idx] = true;
+    t.merging = true;
+    render();
+    const slot = document.querySelectorAll('.slot')[idx];
+    if (slot) {
+      slot.classList.remove('flash');
+      void slot.offsetWidth;
+      slot.classList.add('flash');
+    }
+    setTimeout(() => {
+      tiles = tiles.filter(t2 => t2.id !== tileIdNum);
+      spawnTile();
+      moves++;
+      checkEnd();
+      render();
+      saveState();
+      setTimeout(() => { for (const tt of tiles) tt.spawning = false; }, 200);
+    }, SLIDE_MS);
+  }
+
+  function isTappable(t){
+    if (gameOver || t.merging) return false;
+    return target.some((tv, i) => tv === t.value && !collected[i]);
+  }
+
+  function canSlide(){
+    for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+      const t = tileAt(r, c);
+      if (!t) return true;
+      const right = tileAt(r, c + 1);
+      const down = tileAt(r + 1, c);
+      if (right && right.value === t.value) return true;
+      if (down && down.value === t.value) return true;
+    }
+    return false;
+  }
+
+  function hasTappable(){
+    for (const t of tiles) if (!t.merging && isTappable(t)) return true;
+    return false;
+  }
+
+  function checkEnd(){
+    if (collected.every(Boolean)) { 
+      gameOver = true; 
+      won = true; 
+      if (window.auth && window.auth.currentUser) {
+        window.updateStreak(window.auth.currentUser.uid);
+      }
+    }
+    else if (!canSlide() && !hasTappable()) { gameOver = true; won = false; }
+  }
+
+  function render(){
+    const tEl = document.getElementById('target');
+    const slots = tEl.querySelectorAll('.slot');
+    if (slots.length !== target.length) {
+      tEl.innerHTML = '';
+      target.forEach((tv, i) => {
+        const s = document.createElement('div');
+        s.className = 'slot' + (collected[i] ? ' filled' : '');
+        s.textContent = ch(tv);
+        tEl.appendChild(s);
+      });
+    } else {
+      target.forEach((tv, i) => {
+        const wantFilled = collected[i];
+        const isFilled = slots[i].classList.contains('filled');
+        if (wantFilled && !isFilled) slots[i].classList.add('filled');
+        if (!wantFilled && isFilled) slots[i].classList.remove('filled');
+      });
+    }
+
+    const grid = document.getElementById('grid');
+    const existing = new Map();
+    grid.querySelectorAll('.tile').forEach(el => existing.set(parseInt(el.dataset.id), el));
+    const wantedIds = new Set(tiles.map(t => t.id));
+    for (const [id, el] of existing) if (!wantedIds.has(id)) el.remove();
+    for (const t of tiles) {
+      let el = existing.get(t.id);
+      if (!el) {
+        el = document.createElement('div');
+        el.dataset.id = t.id;
+        el.addEventListener('click', () => tap(t.id));
+        grid.appendChild(el);
+      }
+      el.style.setProperty('--r', t.row);
+      el.style.setProperty('--c', t.col);
+      const cls = ['tile', tier(t.value)];
+      if (t.merging) cls.push('merging');
+      if (t.spawning) cls.push('spawning');
+      if (isTappable(t)) cls.push('tappable');
+      const newCls = cls.join(' ');
+      if (el.className !== newCls) el.className = newCls;
+      const txt = ch(t.value);
+      if (el.textContent !== txt) el.textContent = txt;
+    }
+
+    document.getElementById('moves').textContent = moves;
+    document.getElementById('top').textContent = ch(maxValue()) || 'A';
+    const m = document.getElementById('msg');
+    if (won) { m.textContent = 'Solved in ' + moves + ' moves'; m.className = 'msg win'; }
+    else if (gameOver) { m.textContent = 'No moves left — restart day to retry'; m.className = 'msg lose'; }
+    else { m.textContent = ''; m.className = 'msg'; }
+  }
+
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < SIZE * SIZE; i++) {
+    const c = document.createElement('div');
+    c.className = 'bgcell';
+    bg.appendChild(c);
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+    if (map[e.key]) { e.preventDefault(); slide(map[e.key]); }
+  });
+  document.querySelectorAll('[data-dir]').forEach(b => {
+    b.addEventListener('click', () => slide(b.dataset.dir));
+  });
+  document.getElementById('reset').addEventListener('click', () => newGame(true));
+
+  let ts = null;
+  const grid = document.getElementById('grid');
+  grid.addEventListener('touchstart', (e) => { ts = [e.touches[0].clientX, e.touches[0].clientY]; }, { passive: true });
+  grid.addEventListener('touchend', (e) => {
+    if (!ts) return;
+    const dx = e.changedTouches[0].clientX - ts[0];
+    const dy = e.changedTouches[0].clientY - ts[1];
+    ts = null;
+    if (Math.abs(dx) < 30 && Math.abs(dy) < 30) return;
+    if (Math.abs(dx) > Math.abs(dy)) slide(dx > 0 ? 'right' : 'left');
+    else slide(dy > 0 ? 'down' : 'up');
+  });
+
+  newGame(false);
+})();
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+// Firebase configuration - replace with your project's config
+const firebaseConfig = {
+  apiKey: "AIzaSyDe3UHsJmy0-30ePKyB5NSgQZv5XtPGQZo",
+  authDomain: "letter-shift-v1.firebaseapp.com",
+  projectId: "letter-shift-v1",
+  storageBucket: "letter-shift-v1.firebasestorage.com",
+  messagingSenderId: "618062079732",
+  appId: "1:618062079732:web:c6a7b4366623b397fee0a1"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const provider = new GoogleAuthProvider();
+window.auth = auth;
+window.db = db;
+window.firebaseDoc = doc;
+window.firebaseGetDoc = getDoc;
+window.firebaseSetDoc = setDoc;
+
+// UI elements
+const signInBtn = document.getElementById('signInBtn');
+const userInfo = document.getElementById('userInfo');
+const userName = document.getElementById('userName');
+const currentStreakEl = document.getElementById('currentStreak');
+const bestStreakEl = document.getElementById('bestStreak');
+const signOutBtn = document.getElementById('signOutBtn');
+
+// Sign in function
+async function signIn() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (error) {
+    console.error('Sign in error:', error);
+  }
+}
+
+// Sign out function
+async function signOutUser() {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error('Sign out error:', error);
+  }
+}
+
+// Fetch streak from Firestore
+async function fetchStreak(userId) {
+  try {
+    const docRef = doc(db, 'streaks', userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      return { currentStreak: data.currentStreak || 0, bestStreak: data.bestStreak || 0, lastPlayedDay: data.lastPlayedDay || '' };
+    } else {
+      return { currentStreak: 0, bestStreak: 0, lastPlayedDay: '' };
+    }
+  } catch (error) {
+    console.error('Fetch streak error:', error);
+    return { currentStreak: 0, bestStreak: 0, lastPlayedDay: '' };
+  }
+}
+
+// Update streak in Firestore
+async function updateStreak(userId) {
+  try {
+    const streakData = await fetchStreak(userId);
+    let { currentStreak, bestStreak, lastPlayedDay } = streakData;
+    const today = new Date().toISOString().split('T')[0];
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    if (lastPlayedDay === today) {
+      // Same day, no change
+    } else if (lastPlayedDay === yesterdayStr) {
+      currentStreak++;
+    } else {
+      currentStreak = 1;
+    }
+    bestStreak = Math.max(bestStreak, currentStreak);
+    await setDoc(doc(db, 'streaks', userId), {
+      currentStreak,
+      bestStreak,
+      lastPlayedDay: today
+    });
+    // Update UI
+    currentStreakEl.textContent = currentStreak;
+    bestStreakEl.textContent = bestStreak;
+    return { currentStreak, bestStreak };
+  } catch (error) {
+    console.error('Update streak error:', error);
+  }
+}
+
+// Auth state listener
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    userName.textContent = user.displayName;
+    signInBtn.style.display = 'none';
+    userInfo.style.display = 'flex';
+    const streak = await fetchStreak(user.uid);
+    currentStreakEl.textContent = streak.currentStreak;
+    bestStreakEl.textContent = streak.bestStreak;
+    if (window.syncGameStateForUser) await window.syncGameStateForUser(user.uid);
+  } else {
+    signInBtn.style.display = 'block';
+    userInfo.style.display = 'none';
+    // Start a new anonymous game on sign out
+    if (window.newGame) window.newGame(true);
+  }
+});
+
+// Event listeners
+signInBtn.addEventListener('click', signIn);
+signOutBtn.addEventListener('click', signOutUser);
+
+// Expose updateStreak for game logic
+window.updateStreak = updateStreak;
+</script>
+</body>
+</html>
