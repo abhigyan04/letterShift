@@ -468,6 +468,7 @@
   <div class="actions">
     <button id="helpBtn" type="button">How to play</button>
     <button id="reset" type="button">Restart day</button>
+    <button id="undoBtn" type="button">Undo (5)</button>
     <button id="signInBtn" type="button">Sign in with Google</button>
     <button id="signOutBtn" type="button" style="display:none;">Sign out</button>
   </div>
@@ -1516,7 +1517,8 @@
   }
  
   const STORAGE_KEY = 'letterShift-state';
-  let tiles = [], target, collected, moves, gameOver, won, animating, tileId, rng, rngCalls = 0, highestEverSeen = 1;
+  const MAX_UNDO = 5;
+  let tiles = [], target, collected, moves, gameOver, won, animating, tileId, rng, rngSeed = 0, rngCalls = 0, highestEverSeen = 1, undoUsesLeft = MAX_UNDO, undoStack = [];
 
   function saveState(){
     try {
@@ -1529,8 +1531,10 @@
         gameOver,
         won,
         tileId,
+        rngSeed,
         rngCalls,
         highestEverSeen,
+        undoUsesLeft,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if (window.auth?.currentUser?.uid) {
@@ -1539,6 +1543,50 @@
     } catch (e) {
       // ignore storage errors
     }
+  }
+
+  function pushUndoSnapshot(){
+    if (undoStack.length >= MAX_UNDO) undoStack.shift();
+    undoStack.push({
+      tiles: tiles.map(({id,row,col,value}) => ({id,row,col,value})),
+      target: [...target],
+      collected: [...collected],
+      moves,
+      gameOver,
+      won,
+      tileId,
+      rngCalls,
+      highestEverSeen,
+    });
+    updateUndoButton();
+  }
+
+  function updateUndoButton(){
+    const btn = document.getElementById('undoBtn');
+    if (!btn) return;
+    btn.textContent = `Undo (${undoUsesLeft})`;
+    btn.disabled = undoUsesLeft <= 0 || undoStack.length === 0 || animating;
+  }
+
+  function undoMove(){
+    if (animating || undoUsesLeft <= 0 || undoStack.length === 0) return;
+    const prev = undoStack.pop();
+    undoUsesLeft--;
+    tiles = prev.tiles.map(t => ({ ...t, spawning: false, merging: false }));
+    target = [...prev.target];
+    collected = [...prev.collected];
+    moves = prev.moves;
+    gameOver = prev.gameOver;
+    won = prev.won;
+    tileId = prev.tileId;
+    rngCalls = prev.rngCalls;
+    highestEverSeen = prev.highestEverSeen;
+    rng = seedRand(rngSeed);
+    for (let i = 0; i < rngCalls; i++) rng();
+    animating = false;
+    updateUndoButton();
+    render();
+    saveState();
   }
 
   async function saveStateToFirestore(userId, state){
@@ -1574,9 +1622,12 @@
     gameOver = state.gameOver;
     won = state.won;
     tileId = state.tileId || 0;
+    rngSeed = state.rngSeed ?? di * 7919;
     rngCalls = state.rngCalls || 0;
     highestEverSeen = state.highestEverSeen || tiles.reduce((m, t) => Math.max(m, t.value), 1);
-    rng = seedRand(di * 7919);
+    undoUsesLeft = state.undoUsesLeft ?? MAX_UNDO;
+    undoStack = [];
+    rng = seedRand(rngSeed);
     for (let i = 0; i < rngCalls; i++) rng();
     animating = false;
     const date = new Date(EPOCH + di * 86400000);
@@ -1642,12 +1693,7 @@
 
     const neighborEmpty = [];
     for (const t of activeTiles) {
-      const neighbors = [
-        [t.row - 1, t.col],
-        [t.row + 1, t.col],
-        [t.row, t.col - 1],
-        [t.row, t.col + 1]
-      ];
+      const neighbors = [[t.row-1,t.col],[t.row+1,t.col],[t.row,t.col-1],[t.row,t.col+1]];
       for (const [nr, nc] of neighbors) {
         if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
           const idx = nr * SIZE + nc;
@@ -1656,55 +1702,71 @@
       }
     }
 
-    const [r, c] = neighborEmpty.length
-      ? neighborEmpty[Math.floor(rnd() * neighborEmpty.length)]
-      : empty[Math.floor(rnd() * empty.length)];
-
     const mx = maxValue();
     if (mx > highestEverSeen) highestEverSeen = mx;
     const ladder = highestEverSeen;
 
-    // Check if only one target letter remains uncollected (last-letter mode)
-    let remaining = 0;
-    let lastNeeded = 0;
+    // Find "stuck" tiles: lone low-value tiles that won't naturally spawn
+    // anymore. These accumulate as dead weight unless we occasionally rescue.
+    const valueCounts = new Map();
+    for (const t of activeTiles) valueCounts.set(t.value, (valueCounts.get(t.value) || 0) + 1);
+    const stuckValues = [];
+    for (const [v, c] of valueCounts) {
+      if (c === 1 && v < ladder - 2 && v >= 1) stuckValues.push(v);
+    }
+
+    // Last-letter mode check
+    let remaining = 0, lastNeeded = 0;
     for (let i = 0; i < target.length; i++) {
       if (!collected[i]) { remaining++; lastNeeded = target[i]; }
     }
     const lastLetterMode = remaining === 1;
 
     let value;
+    let rescuePos = null;
     const x = rnd();
 
     if (lastLetterMode && lastNeeded >= 3 && mx >= lastNeeded - 2) {
-      // Player is close to the final letter — heavily bias toward producing it.
-      // Spawning (V-1) often lets two of them merge into V.
-      // Occasional direct V spawn is the "freebie" that helps when stuck.
       if (x < 0.50) value = lastNeeded - 1;
       else if (x < 0.65) value = lastNeeded;
       else if (x < 0.85) value = Math.max(1, lastNeeded - 2);
       else value = climbSpawn(ladder, rnd());
     } else if (lastLetterMode && lastNeeded <= 2) {
-      // Final letter is A or B — easy to produce, just spawn it often
       if (x < 0.55) value = lastNeeded;
       else value = climbSpawn(ladder, rnd());
+    } else if (stuckValues.length > 0 && x < 0.20) {
+      // Rescue a stuck tile, and try to drop it adjacent so it can merge
+      value = stuckValues[Math.floor(rnd() * stuckValues.length)];
+      const orphan = activeTiles.find(t => t.value === value);
+      if (orphan) {
+        const adj = [];
+        for (const [dr, dc] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+          const nr = orphan.row + dr, nc = orphan.col + dc;
+          if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE && !occupied.has(nr * SIZE + nc)) {
+            adj.push([nr, nc]);
+          }
+        }
+        if (adj.length > 0) rescuePos = adj[Math.floor(rnd() * adj.length)];
+      }
     } else {
-      // Normal climbing spawn
       value = climbSpawn(ladder, x);
     }
 
     function climbSpawn(L, r) {
-      // Early game: standard low spawns
-      if (L <= 3) {
-        return r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
-      }
-      // Mid+late game: spawn pool tracks ladder with average gap ~1.5
-      // Distribution skewed toward L-1 to keep momentum, with rare deeper fallbacks
-      if (r < 0.50) return L - 1;
-      if (r < 0.78) return L - 2;
-      if (r < 0.92) return Math.max(1, L - 3);
-      if (r < 0.98) return Math.max(1, L - 4);
-      return 1;
+      if (L <= 3) return r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
+      if (r < 0.08) return L;                     // 8% direct L (free climb)
+      if (r < 0.68) return L - 1;                 // 60% L-1 (main fuel)
+      if (r < 0.85) return L - 2;                 // 17% L-2
+      if (r < 0.94) return Math.max(1, L - 3);    // 9% L-3
+      if (r < 0.99) return Math.max(1, L - 4);    // 5% L-4
+      return 1;                                    // 1% A
     }
+
+    const [r, c] = rescuePos
+      ? rescuePos
+      : (neighborEmpty.length
+          ? neighborEmpty[Math.floor(rnd() * neighborEmpty.length)]
+          : empty[Math.floor(rnd() * empty.length)]);
 
     const newTile = { id: ++tileId, value, row: r, col: c, spawning: true };
     tiles.push(newTile);
@@ -1727,9 +1789,12 @@
       gameOver = saved.gameOver;
       won = saved.won;
       tileId = saved.tileId || 0;
+      rngSeed = saved.rngSeed ?? di * 7919;
       rngCalls = saved.rngCalls || 0;
       highestEverSeen = saved.highestEverSeen || tiles.reduce((m, t) => Math.max(m, t.value), 1);
-      rng = seedRand(di * 7919);
+      undoUsesLeft = saved.undoUsesLeft ?? MAX_UNDO;
+      undoStack = [];
+      rng = seedRand(rngSeed);
       for (let i = 0; i < rngCalls; i++) rng();
       animating = false;
       const date = new Date(EPOCH + di * 86400000);
@@ -1740,9 +1805,12 @@
 
     tiles = [];
     tileId = 0;
+    rngSeed = di * 7919 + (reshuffle ? Date.now() : 0);
+    rng = seedRand(rngSeed);
     rngCalls = 0;
     highestEverSeen = 1;
-    rng = seedRand(di * 7919 + (reshuffle ? Date.now() : 0));
+    undoUsesLeft = MAX_UNDO;
+    undoStack = [];
     const word = selectWord(di);
     // const word = 'AAAA'; // for testing
     target = [...word].map(c => c.charCodeAt(0) - 64);
@@ -1806,11 +1874,22 @@
 
   function slide(dir){
     if (gameOver || animating) return;
-    const snapshot = tiles.map(t => ({ id: t.id, row: t.row, col: t.col }));
+    const previousState = {
+      tiles: tiles.map(({id,row,col,value}) => ({id,row,col,value})),
+      target: [...target],
+      collected: [...collected],
+      moves,
+      gameOver,
+      won,
+      tileId,
+      rngCalls,
+      highestEverSeen,
+    };
+
     const { anyMoved, merges } = processSlide(dir);
     if (!anyMoved) {
       for (const t of tiles) {
-        const snap = snapshot.find(s => s.id === t.id);
+        const snap = previousState.tiles.find(s => s.id === t.id);
         if (snap) { t.row = snap.row; t.col = snap.col; }
       }
       const grid = document.getElementById('grid');
@@ -1819,6 +1898,10 @@
       grid.classList.add('shake');
       return;
     }
+
+    if (undoStack.length >= MAX_UNDO) undoStack.shift();
+    undoStack.push(previousState);
+
     animating = true;
     for (const m of merges) m.drop.merging = true;
     render();
@@ -1844,8 +1927,22 @@
     if (!t || t.merging) return;
     const idx = target.findIndex((tv, i) => tv === t.value && !collected[i]);
     if (idx === -1) return;
+    if (undoStack.length >= MAX_UNDO) undoStack.shift();
+    undoStack.push({
+      tiles: tiles.map(({id,row,col,value}) => ({id,row,col,value})),
+      target: [...target],
+      collected: [...collected],
+      moves,
+      gameOver,
+      won,
+      tileId,
+      rngCalls,
+      highestEverSeen,
+    });
+    updateUndoButton();
     collected[idx] = true;
     t.merging = true;
+    animating = true;
     render();
     const slot = document.querySelectorAll('.slot')[idx];
     if (slot) {
@@ -1858,6 +1955,7 @@
       spawnTile();
       moves++;
       checkEnd();
+      animating = false;
       render();
       saveState();
       setTimeout(() => { for (const tt of tiles) tt.spawning = false; }, 200);
@@ -1969,6 +2067,7 @@
     if (won) { m.textContent = 'Solved in ' + moves + ' moves'; m.className = 'msg win'; }
     else if (gameOver) { m.textContent = 'No moves left — restart day to retry'; m.className = 'msg lose'; }
     else { m.textContent = ''; m.className = 'msg'; }
+    updateUndoButton();
   }
 
   const bg = document.getElementById('bg');
@@ -2007,12 +2106,16 @@
   const endOverlay = document.getElementById('endOverlay');
   const closeEndBtn = document.getElementById('closeEndBtn');
   const restartEndBtn = document.getElementById('restartEndBtn');
+  const undoBtn = document.getElementById('undoBtn');
   if (helpBtn && helpOverlay && closeHelpBtn) {
     helpBtn.addEventListener('click', () => { helpOverlay.hidden = false; });
     closeHelpBtn.addEventListener('click', () => { helpOverlay.hidden = true; });
     helpOverlay.addEventListener('click', (event) => {
       if (event.target === helpOverlay) helpOverlay.hidden = true;
     });
+  }
+  if (undoBtn) {
+    undoBtn.addEventListener('click', undoMove);
   }
   if (endOverlay && closeEndBtn && restartEndBtn) {
     closeEndBtn.addEventListener('click', () => { endOverlay.hidden = true; });
