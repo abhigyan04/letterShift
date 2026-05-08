@@ -136,9 +136,25 @@
     color: #4D3411;
     font-size: 13px;
   }
-  .help-modal button {
+  .help-modal button,
+  .end-modal button {
     width: 100%;
-    padding: 10px 16px;
+    padding: 10px 18px;
+    border: 1px solid #8B6F47;
+    border-radius: 6px;
+    background: #E5D5AA;
+    cursor: pointer;
+    font-size: 11px;
+    color: #4D3411;
+    font-family: inherit;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    transition: background 0.15s;
+  }
+  .help-modal button:hover,
+  .end-modal button:hover {
+    background: #DCC494;
   }
   .end-modal {
     background: #F8F1DA;
