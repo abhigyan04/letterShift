@@ -22,6 +22,7 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
+    overscroll-behavior: none;
   }
   .sr-only {
     position: absolute;
@@ -74,9 +75,17 @@
     justify-content: center;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
     margin-bottom: 18px;
     font-size: 13px;
     color: #6F523A;
+  }
+  #userInfo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
   }
   .auth button {
     padding: 8px 16px;
@@ -93,6 +102,44 @@
     transition: background 0.15s;
   }
   .auth button:hover { background: #DCC494; }
+  .help-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    z-index: 10;
+  }
+  .help-overlay[hidden] {
+    display: none !important;
+  }
+  .help-modal {
+    background: #F8F1DA;
+    border: 1px solid #B8966C;
+    border-radius: 14px;
+    padding: 24px;
+    width: min(100%, 360px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.18);
+    color: #2A1A0A;
+    text-align: left;
+  }
+  .help-modal h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 18px;
+  }
+  .help-modal p {
+    margin: 0 0 18px;
+    line-height: 1.6;
+    color: #4D3411;
+    font-size: 13px;
+  }
+  .help-modal button {
+    width: 100%;
+    padding: 10px 16px;
+  }
   .target {
     display: flex;
     gap: 8px;
@@ -142,10 +189,11 @@
   .msg.lose { color: #8B3A24; font-weight: 600; }
   .meaning {
     text-align: center;
-    font-size: 12px;
-    margin-bottom: 10px;
-    color: #6F523A;
-    font-weight: 500;
+    font-size: 16px;
+    margin-bottom: 14px;
+    color: #4D3411;
+    font-weight: 600;
+    line-height: 1.5;
     font-style: italic;
     font-family: 'Fraunces', Georgia, serif;
   }
@@ -164,6 +212,7 @@
     --gap: 8px;
     --pad: 10px;
     --cell: calc((100% - var(--pad) * 2 - var(--gap) * 4) / 5);
+    touch-action: none;
   }
   .grid.shake { animation: shake 0.32s ease-in-out; }
   .bg {
@@ -325,6 +374,8 @@
     .tile { font-size: 24px; }
     .slot { width: 42px; height: 42px; font-size: 20px; }
     .controls { grid-template-columns: repeat(3, 50px); grid-template-rows: 40px 40px; }
+    .auth { gap: 10px; }
+    .auth button { min-width: 120px; }
   }
 </style>
 </head>
@@ -340,14 +391,19 @@
     </div>
   </div>
   <div id="auth" class="auth">
-    <button id="signInBtn">Sign in with Google</button>
-    <div id="userInfo" style="display:none;">
+    <div id="userInfo" style="display:none; flex-wrap: wrap; gap: 10px; align-items: center;">
       <span id="userName"></span>
       <span>Streak: <span id="currentStreak">0</span> (Best: <span id="bestStreak">0</span>)</span>
-      <button id="signOutBtn">Sign out</button>
     </div>
   </div>
   <div class="target" id="target"></div>
+  <div class="help-overlay" id="helpOverlay" hidden>
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <h3 id="helpTitle">How to Play</h3>
+      <p>Swipe or use the arrow buttons to slide tiles. Combine two matching letters to create the next letter. Tap green-outlined tiles to collect them and complete the target word.</p>
+      <button id="closeHelpBtn" type="button">Close</button>
+    </div>
+  </div>
   <div class="meaning" id="meaning"></div>
   <div class="msg" id="msg"></div>
   <div class="grid" id="grid">
@@ -360,7 +416,10 @@
     <button class="ls-right" data-dir="right" aria-label="Slide right">&rarr;</button>
   </div>
   <div class="actions">
-    <button id="reset">Restart day</button>
+    <button id="helpBtn" type="button">How to play</button>
+    <button id="reset" type="button">Restart day</button>
+    <button id="signInBtn" type="button">Sign in with Google</button>
+    <button id="signOutBtn" type="button" style="display:none;">Sign out</button>
   </div>
   <div class="hint">Arrow keys, buttons, or swipe to slide. Click a green-outlined tile to collect it.</div>
 </div>
@@ -1798,6 +1857,17 @@
     else slide(dy > 0 ? 'down' : 'up');
   });
 
+  const helpBtn = document.getElementById('helpBtn');
+  const helpOverlay = document.getElementById('helpOverlay');
+  const closeHelpBtn = document.getElementById('closeHelpBtn');
+  if (helpBtn && helpOverlay && closeHelpBtn) {
+    helpBtn.addEventListener('click', () => { helpOverlay.hidden = false; });
+    closeHelpBtn.addEventListener('click', () => { helpOverlay.hidden = true; });
+    helpOverlay.addEventListener('click', (event) => {
+      if (event.target === helpOverlay) helpOverlay.hidden = true;
+    });
+  }
+
   newGame(false);
 })();
 </script>
@@ -1907,6 +1977,7 @@ onAuthStateChanged(auth, async (user) => {
   if (user) {
     userName.textContent = user.displayName;
     signInBtn.style.display = 'none';
+    signOutBtn.style.display = 'inline-flex';
     userInfo.style.display = 'flex';
     const streak = await fetchStreak(user.uid);
     currentStreakEl.textContent = streak.currentStreak;
@@ -1914,6 +1985,7 @@ onAuthStateChanged(auth, async (user) => {
     if (window.syncGameStateForUser) await window.syncGameStateForUser(user.uid);
   } else {
     signInBtn.style.display = 'block';
+    signOutBtn.style.display = 'none';
     userInfo.style.display = 'none';
     // Start a new anonymous game on sign out
     if (window.newGame) window.newGame(true);
