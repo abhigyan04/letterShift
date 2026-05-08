@@ -140,6 +140,32 @@
     width: 100%;
     padding: 10px 16px;
   }
+  .end-modal {
+    background: #F8F1DA;
+    border: 1px solid #B8966C;
+  }
+  .end-modal.win {
+    border-color: #486819;
+  }
+  .end-modal.lose {
+    border-color: #8B3A24;
+  }
+  .end-modal h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: 20px;
+  }
+  .end-modal p {
+    margin: 0 0 18px;
+    line-height: 1.6;
+    color: #4D3411;
+    font-size: 14px;
+  }
+  .end-modal button {
+    width: 100%;
+    padding: 10px 16px;
+  }
   .target {
     display: flex;
     gap: 8px;
@@ -400,8 +426,16 @@
   <div class="help-overlay" id="helpOverlay" hidden>
     <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
       <h3 id="helpTitle">How to Play</h3>
-      <p>Swipe or use the arrow buttons to slide tiles. Combine two matching letters to create the next letter. Tap green-outlined tiles to collect them and complete the target word.</p>
+      <p>Swipe or use the arrow buttons to slide tiles. Combine two matching letters to create the next letter. Tap green-outlined tiles to collect them and complete the target word. Remember to collect the tiles on time.</p>
       <button id="closeHelpBtn" type="button">Close</button>
+    </div>
+  </div>
+  <div class="help-overlay" id="endOverlay" hidden>
+    <div class="help-modal end-modal" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+      <h3 id="endTitle">Game over</h3>
+      <p id="endDetail">Great job!</p>
+      <button id="restartEndBtn" type="button">Restart day</button>
+      <button id="closeEndBtn" type="button">Close</button>
     </div>
   </div>
   <div class="meaning" id="meaning"></div>
@@ -429,6 +463,21 @@
   const SIZE = 5;
   const SLIDE_MS = 150;
   const WORDS = ('ABET ABUT ACHE ALIT ANTE ARCH AVER AVOW BACH BACK BADE BAIL BAIT BAKE BALE BALK BALL BAND BANG BANK BARB BARD BARE BARF BARK BASE BASH BASK BATE BAWL BEAD BEAM BEAN BEAR BEAT BEEF BEEN BEEP BELL BELT BEND BENT BIAS BIDE BIFF BIKE BILK BILL BIND BIRD BIRL BIRR BITE BITT BLAB BLAT BLED BLEW BLOB BLOT BLOW BLUB BLUE BLUR BOAT BODE BODY BOIL BOLT BOMB BOND BONE BONG BONK BOOK BOOM BOOT BORE BORN BOSS BOWL BRAG BRAY BRED BREW BRIM BUCK BUFF BULK BULL BUMP BUNG BUNK BUNT BUOY BURL BURN BURP BURR BURY BUSH BUSK BUSS BUST BUSY BUTT BUZZ CACA CAGE CAKE CALK CALL CALM CAME CAMP CANE CANT CARD CARE CART CASE CASH CAST CAVE CEDE CERE CHAP CHAR CHAT CHAW CHID CHIN CHIP CHOP CHUG CHUM CITE CLAD CLAM CLAP CLAW CLEW CLIP CLOG CLOP CLOT CLOY CLUB CLUE COAL COAT COAX COCK CODE COIF COIL COIN COKE COMB COME COMP CONE CONK COOK COOL COOP COPE COPY CORD CORE CORK CORN COSH COST COWL CRAB CRAM CRAP CREW CRIB CROP CROW CUBE CUFF CULL CURB CURE CURL CUSS DADO DAMN DAMP DANG DARE DARN DART DASH DATE DAUB DAWN DAZE DEAL DECK DEED DEEM DEFY DEKE DEMO DENT DENY DIAL DICE DIED DIET DIKE DINE DING DISC DISH DISK DISS DIVE DOCK DOFF DOLE DONE DOOM DOPE DOSS DOTE DOVE DOWN DOZE DRAG DRAW DREW DRIP DROP DRUB DRUG DRUM DUCK DUEL DULL DUMP DUNG DUNK DUPE DUSK DUST EARN EASE ECHO EDGE EDIT EMIT ENVY ESPY ETCH EVEN EXIT FACE FADE FAIL FAKE FALL FARE FARM FART FAST FATE FAWN FAZE FEAR FEED FEEL FELL FELT FEND FESS FETE FEUD FILE FILL FILM FIND FINE FINK FIRE FIRM FISH FIST FIZZ FLAG FLAP FLAT FLAW FLAY FLED FLEE FLEW FLEX FLIP FLIT FLOG FLOP FLOW FLUB FLUX FOAL FOAM FOIL FOLD FOND FOOL FOOT FORD FORK FORM FOUL FOWL FRAG FRAP FRAY FREE FRET FRIT FUEL FULL FUME FUND FUNK FURL FUSE FUSS FUTZ GAIN GAIT GALL GAME GANG GAOL GAPE GARB GASH GASP GATE GAVE GAWK GAWP GAZE GEAR GELD GIBE GIFT GILD GIMP GIRD GIVE GLOM GLOW GLUE GLUG GLUT GNAW GOAD GOLF GONE GONG GOOF GORE GOWN GRAB GRAY GREW GREY GRID GRIN GRIP GRIT GROW GRUB GULL GULP GUSH GUST GYBE HACK HAIL HALE HALT HAND HANG HARE HARK HARM HARP HASH HASP HAST HATE HATH HAUL HAVE HAWK HAZE HEAD HEAL HEAP HEAR HEAT HEED HEEL HEFT HELD HELM HELP HERD HEWN HIDE HIKE HILL HINT HIRE HISS HIVE HOAX HOCK HOLD HOLE HOME HONE HONK HOOD HOOF HOOK HOOP HOOT HOPE HORN HOSE HOST HOVE HOWL HUFF HULK HULL HUMP HUNG HUNT HURL HURT HUSH HUSK HYMN HYPE IDLE INCH IRON ITCH JACK JADE JAIL JAPE JAZZ JEER JELL JERK JEST JIBE JILT JINX JIVE JOIN JOKE JOLT JOSH JUKE JUMP JUNK KAYO KEEL KEEN KEEP KEPT KERN KICK KILL KINK KISS KITE KNAP KNEW KNIT KNOT KNOW LACE LACK LAID LAIN LAMB LAME LAND LARD LARK LASH LAST LAUD LAVE LAZE LEAD LEAF LEAK LEAN LEAP LEER LEFT LEND LENT LEVY LICK LIFT LIKE LILT LIME LIMP LINE LINK LISP LIST LIVE LOAD LOAF LOAN LOCK LOFT LOLL LONG LOOK LOOM LOOP LOOT LOPE LORD LOSE LOST LOUR LOVE LUBE LUCK LUFF LUGE LULL LUMP LURE LURK LUST MADE MAIL MAIM MAKE MARK MASK MATE MAUL MEET MELD MELT MEND MEOW MESS MIFF MILK MIME MIND MINE MISS MOAN MOCK MOOR MOOT MOPE MOVE MUCK MUFF MUSE MUSH MUST MUTE NAIL NAME NEAR NECK NEED NEST NICK NOCK NOSE NOTE NUKE NUMB OBEY OGLE OKAY OMEN OMIT OOZE OPEN OUST PACE PACK PAGE PAIN PAIR PALM PANT PARE PARK PART PASS PAVE PAWN PEAK PEAL PECK PEEK PEEL PEEP PEER PERK PICK PILE PINE PLAN PLAT PLAY PLOD PLOP PLOT PLOW PLUG POCK POKE POOL PORE POSE POST POUR POUT PRAY PRIM PROD PROP PUFF PULL PULP PUMP PURL PURR PUSH PUTT QUIP QUIT QUIZ RACE RAGE RAID RAIN RAKE RANG RANK RANT RAPE RATE RAZE READ REAM REAP REEF REEK REEL REIN RELY REND RENT REST RICE RIDE RILE RING RIOT RISE RISK RIVE ROAM ROAR ROCK RODE ROIL ROLL ROMP ROOF ROOM ROOT ROPE ROUT ROVE RUIN RULE RUSH RUST SACK SAID SAIL SALE SALT SASS SATE SAVE SAWN SCAB SCAM SCAN SCAR SCAT SCUD SCUM SEAL SEAM SEAT SEED SEEK SEEM SEEN SEEP SELL SEND SENT SEWN SHAG SHAM SHED SHIP SHIT SHOE SHOO SHOP SHOT SHOW SHUN SHUT SIDE SIFT SIGH SIGN SING SINK SIRE SITE SIZE SKEW SKID SKIM SKIN SKIP SLAB SLAG SLAM SLAP SLAT SLAY SLED SLEW SLID SLIM SLIP SLIT SLOG SLOP SLOT SLOW SLUE SLUG SLUM SLUR SMUT SNAG SNAP SNIP SNOW SNUB SOAK SOAP SOAR SOCK SOIL SOLD SOLE SOLO SORT SOUR SOWN SPAM SPAN SPAR SPAT SPAY SPED SPEW SPIN SPIT SPOT SPUD SPUR STAB STAG STAR STAY STEM STEP STET STEW STIR STOP STOW STUB STUD STUN SUCK SUIT SULK SUNG SUNK SURF SWAB SWAM SWAP SWAT SWAY SWIG SWIM SWOB SWOT SWUM TACK TAIL TALC TALK TAME TAMP TANK TAPE TASK TAXI TEAM TEAR TEEM TELL TEND TENT TERM TEST TEXT THAW THIN THUD TICK TIDE TILE TILT TIME TING TINT TIRE TOIL TOLD TOLL TONE TOOK TOOL TOOT TOPE TORE TORN TOSS TOTE TOUR TOUT TRAM TRAP TREE TREK TRIM TRIP TROD TROT TRUE TUBE TUCK TUNE TURF TURN TUSK TWIN TWIT TYPE UNDO URGE VAMP VARY VEER VEIL VEIN VEND VENT VEST VETO VIDE VIEW VISA VISE VOID VOTE WADE WAFT WAGE WAIL WAIT WAKE WALK WALL WANE WANT WARD WARM WARN WARP WASH WAUL WAVE WAWL WEAN WEAR WEED WEEP WELD WELL WELT WEND WENT WEPT WERE WERT WHAM WHAP WHET WHIP WHIR WHIZ WHOP WILL WILT WINE WINK WIPE WIRE WISH WIST WIVE WOKE WOLF WOOF WORD WORE WORK WORM WORN WOVE WRAP WRIT XRAY YACK YANK YARN YAUP YAWN YAWP YEAN YELL YELP YOKE YOWL ZERO ZEST ZING ZONE ZONK ZOOM').split(' ');
+
+  function hasDoubleAfterM(word) {
+    for (let i = 1; i < word.length; i++) {
+      if (word[i] === word[i - 1] && word[i] > 'M') return true;
+    }
+    return false;
+  }
+
+  function selectWord(di) {
+    for (let i = 0; i < WORDS.length; i++) {
+      const word = WORDS[(di + i) % WORDS.length];
+      if (!hasDoubleAfterM(word)) return word;
+    }
+    return WORDS[di % WORDS.length];
+  }
 
   const definitions = {
     abet: 'to encourage or assist in wrongdoing',
@@ -1451,7 +1500,7 @@
   }
  
   const STORAGE_KEY = 'letterShift-state';
-  let tiles = [], target, collected, moves, gameOver, won, animating, tileId, rng, rngCalls = 0;
+  let tiles = [], target, collected, moves, gameOver, won, animating, tileId, rng, rngCalls = 0, highestEverSeen = 1;
 
   function saveState(){
     try {
@@ -1465,6 +1514,7 @@
         won,
         tileId,
         rngCalls,
+        highestEverSeen,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       if (window.auth?.currentUser?.uid) {
@@ -1509,6 +1559,7 @@
     won = state.won;
     tileId = state.tileId || 0;
     rngCalls = state.rngCalls || 0;
+    highestEverSeen = state.highestEverSeen || tiles.reduce((m, t) => Math.max(m, t.value), 1);
     rng = seedRand(di * 7919);
     for (let i = 0; i < rngCalls; i++) rng();
     animating = false;
@@ -1565,26 +1616,80 @@
 
   function spawnTile(){
     const occupied = new Set();
-    for (const t of tiles) if (!t.merging) occupied.add(t.row * SIZE + t.col);
+    const activeTiles = tiles.filter(t => !t.merging);
+    for (const t of activeTiles) occupied.add(t.row * SIZE + t.col);
     const empty = [];
     for (let i = 0; i < SIZE * SIZE; i++) {
       if (!occupied.has(i)) empty.push([Math.floor(i / SIZE), i % SIZE]);
     }
     if (!empty.length) return null;
-    const [r, c] = empty[Math.floor(rnd() * empty.length)];
-    const mx = maxValue();
-    let value;
-    if (mx <= 4) {
-      const x = rnd();
-      value = x < 0.7 ? 1 : x < 0.95 ? 2 : 3;
-    } else {
-      const lo = Math.max(1, mx - 5);
-      const hi = Math.max(2, mx - 2);
-      const range = hi - lo;
-      const x = rnd();
-      const offset = Math.floor(x * x * (range + 1));
-      value = lo + Math.min(offset, range);
+
+    const neighborEmpty = [];
+    for (const t of activeTiles) {
+      const neighbors = [
+        [t.row - 1, t.col],
+        [t.row + 1, t.col],
+        [t.row, t.col - 1],
+        [t.row, t.col + 1]
+      ];
+      for (const [nr, nc] of neighbors) {
+        if (nr >= 0 && nr < SIZE && nc >= 0 && nc < SIZE) {
+          const idx = nr * SIZE + nc;
+          if (!occupied.has(idx)) neighborEmpty.push([nr, nc]);
+        }
+      }
     }
+
+    const [r, c] = neighborEmpty.length
+      ? neighborEmpty[Math.floor(rnd() * neighborEmpty.length)]
+      : empty[Math.floor(rnd() * empty.length)];
+
+    const mx = maxValue();
+    if (mx > highestEverSeen) highestEverSeen = mx;
+    const ladder = highestEverSeen;
+
+    // Check if only one target letter remains uncollected (last-letter mode)
+    let remaining = 0;
+    let lastNeeded = 0;
+    for (let i = 0; i < target.length; i++) {
+      if (!collected[i]) { remaining++; lastNeeded = target[i]; }
+    }
+    const lastLetterMode = remaining === 1;
+
+    let value;
+    const x = rnd();
+
+    if (lastLetterMode && lastNeeded >= 3 && mx >= lastNeeded - 2) {
+      // Player is close to the final letter — heavily bias toward producing it.
+      // Spawning (V-1) often lets two of them merge into V.
+      // Occasional direct V spawn is the "freebie" that helps when stuck.
+      if (x < 0.50) value = lastNeeded - 1;
+      else if (x < 0.65) value = lastNeeded;
+      else if (x < 0.85) value = Math.max(1, lastNeeded - 2);
+      else value = climbSpawn(ladder, rnd());
+    } else if (lastLetterMode && lastNeeded <= 2) {
+      // Final letter is A or B — easy to produce, just spawn it often
+      if (x < 0.55) value = lastNeeded;
+      else value = climbSpawn(ladder, rnd());
+    } else {
+      // Normal climbing spawn
+      value = climbSpawn(ladder, x);
+    }
+
+    function climbSpawn(L, r) {
+      // Early game: standard low spawns
+      if (L <= 3) {
+        return r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
+      }
+      // Mid+late game: spawn pool tracks ladder with average gap ~1.5
+      // Distribution skewed toward L-1 to keep momentum, with rare deeper fallbacks
+      if (r < 0.50) return L - 1;
+      if (r < 0.78) return L - 2;
+      if (r < 0.92) return Math.max(1, L - 3);
+      if (r < 0.98) return Math.max(1, L - 4);
+      return 1;
+    }
+
     const newTile = { id: ++tileId, value, row: r, col: c, spawning: true };
     tiles.push(newTile);
     return newTile;
@@ -1607,6 +1712,7 @@
       won = saved.won;
       tileId = saved.tileId || 0;
       rngCalls = saved.rngCalls || 0;
+      highestEverSeen = saved.highestEverSeen || tiles.reduce((m, t) => Math.max(m, t.value), 1);
       rng = seedRand(di * 7919);
       for (let i = 0; i < rngCalls; i++) rng();
       animating = false;
@@ -1619,8 +1725,9 @@
     tiles = [];
     tileId = 0;
     rngCalls = 0;
+    highestEverSeen = 1;
     rng = seedRand(di * 7919 + (reshuffle ? Date.now() : 0));
-    const word = WORDS[di % WORDS.length];
+    const word = selectWord(di);
     // const word = 'AAAA'; // for testing
     target = [...word].map(c => c.charCodeAt(0) - 64);
     const meaning = definitions[word.toLowerCase()] || 'Definition not available';
@@ -1763,6 +1870,26 @@
     return false;
   }
 
+  function showEndPopup(){
+    const endOverlay = document.getElementById('endOverlay');
+    const endTitle = document.getElementById('endTitle');
+    const endDetail = document.getElementById('endDetail');
+    const restartEndBtn = document.getElementById('restartEndBtn');
+    if (!endOverlay || !endTitle || !endDetail || !restartEndBtn) return;
+    endOverlay.hidden = false;
+    endOverlay.classList.toggle('win', won);
+    endOverlay.classList.toggle('lose', !won);
+    if (won) {
+      endTitle.textContent = 'You Win!';
+      endDetail.textContent = 'Nice work — you collected all target letters.';
+      restartEndBtn.textContent = 'Play again';
+    } else {
+      endTitle.textContent = 'No moves left';
+      endDetail.textContent = 'The board is locked up. Restart day to try again.';
+      restartEndBtn.textContent = 'Restart day';
+    }
+  }
+
   function checkEnd(){
     if (collected.every(Boolean)) { 
       gameOver = true; 
@@ -1770,8 +1897,9 @@
       if (window.auth && window.auth.currentUser) {
         window.updateStreak(window.auth.currentUser.uid);
       }
+      showEndPopup();
     }
-    else if (!canSlide() && !hasTappable()) { gameOver = true; won = false; }
+    else if (!canSlide() && !hasTappable()) { gameOver = true; won = false; showEndPopup(); }
   }
 
   function render(){
@@ -1860,11 +1988,21 @@
   const helpBtn = document.getElementById('helpBtn');
   const helpOverlay = document.getElementById('helpOverlay');
   const closeHelpBtn = document.getElementById('closeHelpBtn');
+  const endOverlay = document.getElementById('endOverlay');
+  const closeEndBtn = document.getElementById('closeEndBtn');
+  const restartEndBtn = document.getElementById('restartEndBtn');
   if (helpBtn && helpOverlay && closeHelpBtn) {
     helpBtn.addEventListener('click', () => { helpOverlay.hidden = false; });
     closeHelpBtn.addEventListener('click', () => { helpOverlay.hidden = true; });
     helpOverlay.addEventListener('click', (event) => {
       if (event.target === helpOverlay) helpOverlay.hidden = true;
+    });
+  }
+  if (endOverlay && closeEndBtn && restartEndBtn) {
+    closeEndBtn.addEventListener('click', () => { endOverlay.hidden = true; });
+    restartEndBtn.addEventListener('click', () => { endOverlay.hidden = true; newGame(true); });
+    endOverlay.addEventListener('click', (event) => {
+      if (event.target === endOverlay) endOverlay.hidden = true;
     });
   }
 
