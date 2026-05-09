@@ -2199,16 +2199,19 @@ async function fetchStreak(userId) {
 }
 
 // Update streak in Firestore
+function utcDateString(date = new Date()) {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+}
+
 async function updateStreak(userId) {
   try {
     const streakData = await fetchStreak(userId);
     let { currentStreak, bestStreak, lastPlayedDay } = streakData;
-    const today = new Date().toISOString().split('T')[0];
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const today = utcDateString();
+    const yesterday = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() - 1));
+    const yesterdayStr = utcDateString(yesterday);
     if (lastPlayedDay === today) {
-      // Same day, no change
+      // Same UTC day, no change
     } else if (lastPlayedDay === yesterdayStr) {
       currentStreak++;
     } else {
