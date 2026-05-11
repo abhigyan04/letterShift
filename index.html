@@ -2208,7 +2208,8 @@ async function updateStreak(userId) {
     const streakData = await fetchStreak(userId);
     let { currentStreak, bestStreak, lastPlayedDay } = streakData;
     const today = utcDateString();
-    const yesterday = new Date(Date.UTC(new Date().getUTCFullYear(), new Date().getUTCMonth(), new Date().getUTCDate() - 1));
+    const todayDate = new Date();
+    const yesterday = new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() - 1));
     const yesterdayStr = utcDateString(yesterday);
     if (lastPlayedDay === today) {
       // Same UTC day, no change
