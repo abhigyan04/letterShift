@@ -2012,11 +2012,18 @@
       gameOver = true; 
       won = true; 
       if (window.auth && window.auth.currentUser) {
-        window.updateStreak(window.auth.currentUser.uid);
+        window.updateStreak(window.auth.currentUser.uid, true);
       }
       showEndPopup();
     }
-    else if (!canSlide() && !hasTappable()) { gameOver = true; won = false; showEndPopup(); }
+    else if (!canSlide() && !hasTappable()) {
+      gameOver = true;
+      won = false;
+      if (window.auth && window.auth.currentUser) {
+        window.updateStreak(window.auth.currentUser.uid, false);
+      }
+      showEndPopup();
+    }
   }
 
   function render(){
@@ -2206,7 +2213,7 @@ function utcDateString(date = new Date()) {
   return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
 }
 
-async function updateStreak(userId) {
+async function updateStreak(userId, completed = true) {
   try {
     const streakData = await fetchStreak(userId);
     let { currentStreak, bestStreak, lastPlayedDay } = streakData;
@@ -2214,20 +2221,25 @@ async function updateStreak(userId) {
     const todayDate = new Date();
     const yesterday = new Date(Date.UTC(todayDate.getUTCFullYear(), todayDate.getUTCMonth(), todayDate.getUTCDate() - 1));
     const yesterdayStr = utcDateString(yesterday);
-    if (lastPlayedDay === today) {
-      // Same UTC day, no change
-    } else if (lastPlayedDay === yesterdayStr) {
-      currentStreak++;
+    if (completed) {
+      if (lastPlayedDay === today) {
+        // Already completed today, no change
+      } else if (lastPlayedDay === yesterdayStr) {
+        currentStreak++;
+      } else {
+        currentStreak = 1;
+      }
+      lastPlayedDay = today;
     } else {
-      currentStreak = 1;
+      // Failures should break the current streak, but keep the last win day so a later same-day completion still counts correctly.
+      currentStreak = 0;
     }
     bestStreak = Math.max(bestStreak, currentStreak);
     await setDoc(doc(db, 'streaks', userId), {
       currentStreak,
       bestStreak,
-      lastPlayedDay: today
+      lastPlayedDay
     });
-    // Update UI
     currentStreakEl.textContent = currentStreak;
     bestStreakEl.textContent = bestStreak;
     return { currentStreak, bestStreak };
